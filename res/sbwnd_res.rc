@@ -1,0 +1,13 @@
+#include "sbwnd_res.h"
+
+SBSB_ICO    ICON    "smsb.ico"
+LGSB_ICO    ICON    "lgsb.ico"
+
+TBL_ONE ACCELERATORS {
+    0x08,   LARGE_BACK, VIRTKEY, CONTROL
+    "^V",   PASTE
+}
+
+MENU_ONE MENU {
+    MENUITEM "&Fonts", ITEM_FONTS
+}
