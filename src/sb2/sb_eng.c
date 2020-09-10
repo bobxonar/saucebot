@@ -624,7 +624,7 @@ void sbCmd_Download( sbWnd *viewer, sbWnd *logger, wchar_t *text ) {
 			STRWND *close;
 		
 		if ( !v ) {
-			// Create windows and return, nothing has happened yet
+			// Create windows and call msgloop(), nothing has happened yet
 			sbWnd_Dims dims = { 0 };
 
 			dims.floatDims[0] = SB_CENTER_DIM( 0.5f );
@@ -693,7 +693,7 @@ void sbCmd_Download( sbWnd *viewer, sbWnd *logger, wchar_t *text ) {
 			SBStringWindows.destroy( invalid );
 			SBStringWindows.destroy( close );
 		} else {
-			// Destroy windows, setjmp returned again
+			// Destroy windows, setjmp returned again and the close button was pressed.
 			SBTextboxes.destroy( inputBox );
 			SBStringWindows.destroy( prompt );
 			SBStringWindows.destroy( invalid );
@@ -715,15 +715,10 @@ void sbCmd_Download( sbWnd *viewer, sbWnd *logger, wchar_t *text ) {
 	 * Set window references and out functions
 	 */
 
-	/* TODO: implement path checking on the prompt, showing the user if the path is a valid absolute path (starts with a drive letter).
-	 * The thing should also create the path fully, and tell the user as well.
-	 */
-
 	// Loading symbol
 	sbCmd_Download_Session *ses;
 	sbWnd *loading;
 	{
-		sbCmd_Download_Session *ses;
 		sbWnd_Dims dims = { 0 };
 		dims.floatDims[0] = SB_CENTER_DIM( 0.5f );
 		dims.floatDims[1] = SB_CENTER_DIM( 0.5f );
@@ -1331,7 +1326,7 @@ void sbCmd_Chconf( sbWnd *viewer, sbWnd *logger, wchar_t *text ) {
 	SBBasicTextWindows.clear( viewer );
 	SBBasicTextWindows.draw( logger, L"Opened configurator" );
 	SaucebotMaster.cmdOn = 1;
-	// set up a setjmp
+	
 	jmp_buf *jmp = newptr( jmp_buf );
 	int v = setjmp( *jmp );
 

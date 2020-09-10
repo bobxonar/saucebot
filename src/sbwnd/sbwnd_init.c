@@ -123,12 +123,12 @@ void RegisterClasses( void ) {
 	txtbox.lpfnWndProc = TextboxProc;
 	txtbox.hInstance = inst;
 	txtbox.lpszClassName = SbGUIMaster.WindowClassNameArray[ TEXTBOX_WINDOW ];
-	txtbox.hCursor = LoadCursor( inst, IDC_IBEAM );
+	txtbox.hCursor = LoadCursor( NULL, IDC_IBEAM );
 
 	basic.cbSize = sizeof( WNDCLASSEXW );
 	basic.lpfnWndProc = BasicWndProc;
 	basic.hInstance = inst;
-	basic.hCursor = LoadCursor( inst, IDC_ARROW );
+	basic.hCursor = LoadCursor( NULL, IDC_ARROW );
 	basic.hbrBackground = white;
 	basic.lpszClassName = SbGUIMaster.WindowClassNameArray[ BASIC_WINDOW ];
 
@@ -136,20 +136,20 @@ void RegisterClasses( void ) {
 	text.lpfnWndProc = TextWndProc;
 	text.hInstance = inst;
 	text.lpszClassName = SbGUIMaster.WindowClassNameArray[ TEXT_WINDOW ];
-	text.hCursor = LoadCursor( inst, IDC_ARROW );
+	text.hCursor = LoadCursor( NULL, IDC_ARROW );
 	text.hbrBackground = white;
 
 	clickable.cbSize = sizeof( WNDCLASSEXW );
 	clickable.lpfnWndProc = ClickableProc;
 	clickable.hInstance = inst;
 	clickable.lpszClassName = SbGUIMaster.WindowClassNameArray[ CLICKABLE_WINDOW ];
-	clickable.hCursor = LoadCursor( inst, IDC_HAND);
+	clickable.hCursor = LoadCursor( NULL, IDC_HAND);
 
 	restrictedImage.cbSize = sizeof( WNDCLASSEXW );
 	restrictedImage.lpfnWndProc = RestrictedImageProc;
 	restrictedImage.hInstance = inst;
 	restrictedImage.lpszClassName = SbGUIMaster.WindowClassNameArray[ RESTRICTED_IMAGE_WINDOW ];
-	restrictedImage.hCursor = LoadCursor( inst, IDC_ARROW );
+	restrictedImage.hCursor = LoadCursor( NULL, IDC_ARROW );
 	restrictedImage.hbrBackground = white;
 
 	master.cbSize = sizeof( WNDCLASSEXW );
@@ -170,6 +170,8 @@ void RegisterClasses( void ) {
 		IMAGE_ICON,
 		0, 0, 0
 	);
+	master.lpszMenuName = MAKEINTRESOURCEW( MENU_ONE );
+	master.hCursor = LoadCursor( NULL, IDC_ARROW );
 
 	viewmaster.cbSize = sizeof( WNDCLASSEXW );
 	viewmaster.lpfnWndProc = ViewcmdMasterProc;

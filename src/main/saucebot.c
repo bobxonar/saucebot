@@ -22,9 +22,6 @@ int WINAPI WinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
 	sbWnd_Dims dims = { .intDims = { SB_CENTER_DIM( 960 ), SB_CENTER_DIM( 540 ), 960, 540 } };
 	sbWnd *first = SBMasterWindows.create( NULL, L"Saucebot 0.3 \"エッチ\"" , SB_DIMTYPE_IIII_TL, &dims );
 
-	HMENU menu = LoadMenuW( hInstance, MAKEINTRESOURCEW( MENU_ONE ) );
-	SetMenu( GetHWND( first ), menu );
-
 	sbWnd_Dims tBoxDims = { .floatDims = { 0.15f, SB_CENTER_DIM( 0.925f ), 0.55f, 0.0f } };
 	tBoxDims.intDims[3] = 19;
 	sbWnd *second = SBTextboxes.create( GetHWND( first ), L"tbox-1", SB_DIMTYPE_FFFI_TL, &tBoxDims, 0 );
