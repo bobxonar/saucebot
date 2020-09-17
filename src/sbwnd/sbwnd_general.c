@@ -24,9 +24,20 @@ wString GetTextboxString( TBOX sbWnd *wnd ) {
 
 void *GetSpecificHandle( sbWnd *wnd ) { return wnd->specific; }
 
-// Took way too long, but here's a (hopefully) robust main message loop.
+// bitch
 void msgloop( void ) {
-	uint16_t sz = Lists.Size( SbGUIMaster.TopLevelWindows );
+
+	HWND mwnd = GetHWND( SbGUIMaster.masterWnd );
+	MSG msg = { 0 };
+	while ( ( GetMessageW( &msg, mwnd, 0, 0 ) ) > 0 ) {
+		if ( !TranslateAcceleratorW( mwnd , SbGUIMaster.sbAccelTable, &msg ) ) {
+			TranslateMessage( &msg );
+			DispatchMessageW( &msg );
+		}
+	}
+
+
+	/* uint16_t sz = Lists.Size( SbGUIMaster.TopLevelWindows );
 	while ( sz > 0 ) {
 		for ( uint16_t i = 0; i < sz; ++i ) {
 			sbWnd *wnd = Lists.Get( SbGUIMaster.TopLevelWindows, i );
@@ -50,7 +61,7 @@ void msgloop( void ) {
 			if ( !IsWindow( GetHWND( SbGUIMaster.masterWnd ) ) )
 				exit( EXIT_SUCCESS );
 		}
-	}
+	} */
 	return;
 }
 
