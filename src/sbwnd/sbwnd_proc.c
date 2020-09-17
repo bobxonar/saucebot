@@ -15,9 +15,9 @@
 // Checks a window has the current keyboard focus. If not, sends the message where it needs to go.
 #define CHK_FOCUS_SEND_MSG(hwnd, msg, lParam, wParam)       if(GetFocus()!=hwnd){SendMessage(GetFocus(),msg,lParam,wParam);return 0;}(void)0
 // Background color for string windows while the mouse is over the window
-#define STRWND_BG_COLOR		(RGB(0xC8,0xC8,0xC8))
+#define STRWND_BG_COLOR		(RGB(0xC0,0xC0,0xC0))
 // Background color for string windows while the mouse button is down
-#define STRWND_CLK_COLOR	(RGB(0xD8,0xD8,0xD8))
+#define STRWND_CLK_COLOR	(RGB(0xE0,0xE0,0xE0))
 
 LRESULT CALLBACK BasicWndProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam ) {
 	switch( msg ) {
