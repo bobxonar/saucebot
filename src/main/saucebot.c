@@ -12,6 +12,21 @@
 
 int WINAPI WinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow ) {
 	// As of 0.3: 6064 lines of code
+
+
+	/*
+	 * The TODOs for saucebot go here
+	 * -> Integrate number and download commands
+	 *     -> The number command should be aware of what is already downloaded and display those
+	 *     -> Add a 'downloads' option to the number command
+	 *         -> It should bring up a scrollable list of numbers you have downloaded
+	 *            they should have titles as well. Need to give downloads an info file.
+	 * 
+	 * -> General UI improvements
+	 *     -> Fix unnecessary flickering in images - stop redrawing windows so often.
+	 *     -> Fix basic text window performance - make one DrawTextEx call instead of several per paint message.
+	 */
+	
 	#ifdef RELEASE
 	FreeConsole( );
 	#endif
