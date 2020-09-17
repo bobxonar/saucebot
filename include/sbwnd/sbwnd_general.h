@@ -192,6 +192,10 @@ typedef struct strwndinfo {
 
 	LOGFONTW *currentFont;
 
+	int 
+		clickable, // denotes if window is clickable
+		mouseState; // Bit 0 is for hover, Bit 1 is for button down
+
 } SBStringWindowInfo;
 
 typedef struct progbarwndinfo {
@@ -280,7 +284,8 @@ typedef struct {
 
 	struct {
 
-		sbWnd *( *create )( HWND, const wString, uint8_t, sbWnd_Dims *, const wString, uint16_t );
+		// Set last parameter to nonzero for clickable, zero for static.
+		sbWnd *( *create )( HWND, const wString, uint8_t, sbWnd_Dims *, const wString, uint16_t, int );
 
 		void ( *destroy )( sbWnd * );
 

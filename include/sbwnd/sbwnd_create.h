@@ -92,7 +92,7 @@ sbWnd *ClickableWindowCreator( HWND, const wString, uint8_t, sbWnd_Dims * );
 sbWnd *RestrictedImageWindowCreator( HWND, const wString, uint8_t, sbWnd_Dims *, const wString );
 sbWnd *MasterWindowCreator( HWND, const wString, uint8_t, sbWnd_Dims * );
 sbWnd *ViewcmdMasterWindowCreator( HWND, const wString, uint8_t, sbWnd_Dims * );
-sbWnd *StringWindowCreator( HWND, const wString, uint8_t, sbWnd_Dims *, const wString, uint16_t );
+sbWnd *StringWindowCreator( HWND, const wString, uint8_t, sbWnd_Dims *, const wString, uint16_t, int );
 sbWnd *ProgressBarWindowCreator( HWND, const wString, uint8_t, sbWnd_Dims *, uint16_t );
 sbWnd *DldcmdMasterWindowCreator( HWND, const wString, uint8_t, sbWnd_Dims * );
 
@@ -119,7 +119,7 @@ SBTextboxInfo *TextboxInfoCreator( HWND, int );
 SBBasicTextWindowInfo *BasicTextWindowInfoCreator( HWND, uint16_t );
 SBClickableWindowInfo *ClickableWindowInfoCreator( void );
 SBRestrictedImageWindowInfo *RestrictedImageWindowInfoCreator( HWND, const wString );
-SBStringWindowInfo *StringWindowInfoCreator( const wString, uint16_t );
+SBStringWindowInfo *StringWindowInfoCreator( const wString, uint16_t, int );
 SBProgressBarWindowInfo *ProgressBarWindowInfoCreator( uint16_t );
 
 void sbWnd_ProcessQueue( HWND );

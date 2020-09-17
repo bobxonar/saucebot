@@ -14,6 +14,10 @@
 
 // Checks a window has the current keyboard focus. If not, sends the message where it needs to go.
 #define CHK_FOCUS_SEND_MSG(hwnd, msg, lParam, wParam)       if(GetFocus()!=hwnd){SendMessage(GetFocus(),msg,lParam,wParam);return 0;}(void)0
+// Background color for string windows while the mouse is over the window
+#define STRWND_BG_COLOR		(RGB(0xC8,0xC8,0xC8))
+// Background color for string windows while the mouse button is down
+#define STRWND_CLK_COLOR	(RGB(0xD8,0xD8,0xD8))
 
 LRESULT CALLBACK BasicWndProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam ) {
 	switch( msg ) {
@@ -572,10 +576,25 @@ LRESULT CALLBACK StringProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 	switch( msg ) {
 
 		case WM_ERASEBKGND: {
+
+			sbWnd *wnd = Maps.Search( SbGUIMaster.WindowMap, hwnd );
+			SBStringWindowInfo *info = GetSpecificHandle( wnd );
+			int state = info->mouseState;
+
 			HDC dc = ( void * )wParam;
 			RECT r = { 0 };
 			GetClientRect( hwnd, &r );
-			FillRect( dc, &r, GetStockObject( WHITE_BRUSH ) );
+
+			COLORREF col = RGB( 0xFF, 0xFF, 0xFF );
+			if ( info->clickable && state & 0x01 ) // in-area bit
+				col = STRWND_BG_COLOR;
+			if ( info->clickable && state & 0x10 ) // click bit
+				col = STRWND_CLK_COLOR;
+
+			HBRUSH br = CreateSolidBrush( col );
+			FillRect( dc, &r, br );
+			DeleteObject( br );
+
 			return 1;
 		}
 
@@ -587,13 +606,19 @@ LRESULT CALLBACK StringProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 			sbWnd *wnd = Maps.Search( SbGUIMaster.WindowMap, hwnd );
 			SBStringWindowInfo *info = GetSpecificHandle( wnd );
 			
+			int state = info->mouseState;
+			if ( info->clickable && state & 0x01 ) // in-area bit
+				SetBkColor( dc, STRWND_BG_COLOR );
+			if ( info->clickable && state & 0x10 ) // click bit
+				SetBkColor( dc, STRWND_CLK_COLOR );
+
 			HFONT font = CreateFontIndirectW( info->currentFont );
 			HBRUSH brush = GetStockObject( BLACK_BRUSH );
 
 			HBRUSH prevBrush = SelectObject( dc, brush );
 			HFONT prevFont = SelectObject( dc, font );
 
-			TabbedTextOutW( dc, 1, 1, info->str, wcslen( info->str ), 0, NULL, 1 );
+			TabbedTextOutW( dc, 2, 1, info->str, wcslen( info->str ), 0, NULL, 1 );
 
 			SelectObject( dc, prevBrush );
 			SelectObject( dc, prevFont );
@@ -615,7 +640,7 @@ LRESULT CALLBACK StringProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 
 			sbWnd_Dims newSize = { 0 };
 			memcpy( &newSize, wnd->dims, sizeof( sbWnd_Dims ) );
-			newSize.intDims[2] = SBWindows.getStringWidth( info->str, info->fontSize ) + 3;
+			newSize.intDims[2] = SBWindows.getStringWidth( info->str, info->fontSize ) + 4;
 			SBWindows.changeDims( wnd, wnd->dimType, &newSize );
 
 			InvalidateRect( hwnd, NULL, TRUE );
@@ -624,8 +649,65 @@ LRESULT CALLBACK StringProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 			break;
 		}
 
+		case WM_MOUSEMOVE: {
+			sbWnd *wnd = Maps.Search( SbGUIMaster.WindowMap, hwnd );
+			SBStringWindowInfo *info = GetSpecificHandle( wnd );
+
+			if ( !info->clickable )
+				break;
+
+			int prevState = info->mouseState;
+			info->mouseState |= 0x01; // Set in-area bit
+			int curState = info->mouseState;
+
+			TRACKMOUSEEVENT me = { 0 };
+			me.cbSize = sizeof( TRACKMOUSEEVENT );
+			me.hwndTrack = hwnd;
+			me.dwFlags = TME_LEAVE | TME_HOVER;
+			me.dwHoverTime = HOVER_DEFAULT;
+
+			TrackMouseEvent( &me );
+			
+			if ( ( curState - prevState ) != 0 )
+				InvalidateRect( hwnd, NULL, TRUE );
+
+			break;
+		}
+
+		case WM_MOUSELEAVE: {
+			sbWnd *wnd = Maps.Search( SbGUIMaster.WindowMap, hwnd );
+			SBStringWindowInfo *info = GetSpecificHandle( wnd );
+			info->mouseState = 0; // Reset all bits
+			InvalidateRect( hwnd, NULL, TRUE );
+			break;
+		}
+
+		case WM_MOUSEHOVER:
+			break; // Perhaps add hover functionality in the future
+
 		case WM_LBUTTONDOWN: {
 			sbWnd *wnd = Maps.Search( SbGUIMaster.WindowMap, hwnd );
+			SBStringWindowInfo *info = GetSpecificHandle( wnd );
+
+			if ( !info->clickable )
+				break;
+			info->mouseState |= 0x10; // Set click bit
+
+			InvalidateRect( hwnd, NULL, TRUE );
+			break;
+		}
+
+		case WM_LBUTTONUP: {
+			sbWnd *wnd = Maps.Search( SbGUIMaster.WindowMap, hwnd );
+			SBStringWindowInfo *info = GetSpecificHandle( wnd );
+
+			if ( !info->clickable )
+				break;
+			info->mouseState &= ~(0x10); // Reset click bit
+
+			InvalidateRect( hwnd, NULL, TRUE );
+			UpdateWindow( hwnd ); // Cannot assume out function will return quickly
+
 			SBWindows.out( wnd, wnd, NULL );
 			break;
 		}

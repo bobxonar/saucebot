@@ -37,7 +37,7 @@ HWND BasicWindowHWNDCreator( HWND parent, const wString name, uint8_t dimType, s
 		GetClientRect( parent, &r );
 		w = r.right - r.left;
 		h = r.bottom - r.top;
-		style = WS_CHILD;
+		style = WS_CHILD | WS_BORDER;
 	}
 
 	// Turn floats into ints using parent window dimensions.
@@ -643,16 +643,16 @@ sbWnd *ViewcmdMasterWindowCreator( HWND parent, const wString name, uint8_t dimT
 	return fin;
 }
 
-sbWnd *StringWindowCreator( HWND parent, const wString name, uint8_t dimType, sbWnd_Dims *dims, const wString str, uint16_t fontSize ) {
+sbWnd *StringWindowCreator( HWND parent, const wString name, uint8_t dimType, sbWnd_Dims *dims, const wString str, uint16_t fontSize, int clickable ) {
 	// Self-sizing.
 	sbWnd_Dims selfSize = { 0 };
 	memcpy( &selfSize, dims, sizeof( sbWnd_Dims ) );
-	selfSize.intDims[2] = SBWindows.getStringWidth( str, fontSize ) + 3;
+	selfSize.intDims[2] = SBWindows.getStringWidth( str, fontSize ) + 4;
 	selfSize.intDims[3] = fontSize + 2;
 
 	sbWnd *fin = CommonInfoCreator( parent, name, ( dimType & 0x3C ), &selfSize );
 	fin->hwnd = StringWindowHWNDCreator( parent, name, ( dimType & 0x3C ), &selfSize );
-	fin->specific = StringWindowInfoCreator( str, fontSize );
+	fin->specific = StringWindowInfoCreator( str, fontSize, clickable );
 	fin->type = STRING_WINDOW;
 	Maps.Insert( SbGUIMaster.WindowMap, fin->hwnd, fin );
 	if ( SbGUIMaster.createMode ) {
@@ -751,12 +751,13 @@ SBRestrictedImageWindowInfo *RestrictedImageWindowInfoCreator( HWND hwnd, const 
 	return fin;
 }
 
-SBStringWindowInfo *StringWindowInfoCreator( const wString str, uint16_t fontSize ) {
+SBStringWindowInfo *StringWindowInfoCreator( const wString str, uint16_t fontSize, int clickable ) {
 	SBStringWindowInfo *fin = newptr( SBStringWindowInfo );
 
 	fin->currentFont = newptr( LOGFONTW );
 	memcpy( fin->currentFont, SbGUIMaster.currentFont, sizeof( LOGFONTW ) );
 
+	fin->clickable = clickable;
 	fin->fontSize = fontSize;
 	fin->currentFont->lfHeight = fontSize;
 	fin->currentFont->lfWidth = 0;

@@ -157,7 +157,8 @@ void sbCmd_Number( sbWnd *viewer, sbWnd *logger, wchar_t *text ) {
 		SB_DIMTYPE_FIII_TL,
 		&dims,
 		L"<",
-		15
+		15,
+		1
 	);
 
 	// Number switcher right arrow
@@ -169,7 +170,8 @@ void sbCmd_Number( sbWnd *viewer, sbWnd *logger, wchar_t *text ) {
 		SB_DIMTYPE_FIII_TL,
 		&dims,
 		L">",
-		15
+		15,
+		1
 	);
 
 	// Close button
@@ -181,7 +183,8 @@ void sbCmd_Number( sbWnd *viewer, sbWnd *logger, wchar_t *text ) {
 		SB_DIMTYPE_FIII_TR,
 		&dims,
 		L"Close",
-		15
+		15,
+		1
 	);
 
 	// Fullscreen button
@@ -193,7 +196,8 @@ void sbCmd_Number( sbWnd *viewer, sbWnd *logger, wchar_t *text ) {
 		SB_DIMTYPE_FIII_TL,
 		&dims,
 		L"Fullscreen",
-		15
+		15,
+		1
 	);
 
 	// Loading symbol
@@ -206,7 +210,8 @@ void sbCmd_Number( sbWnd *viewer, sbWnd *logger, wchar_t *text ) {
 		SB_DIMTYPE_FFII_TL,
 		&dims,
 		L"Loading...",
-		15
+		15,
+		0
 	);
 
 	SBWindows.setIn( viewMaster, numCmdProc );
@@ -374,7 +379,8 @@ void CreateWindows_SbCommand_Number( sbCmd_Number_Session *ses ) {
 			SB_DIMTYPE_FIII_TL,
 			&dims,
 			Lists.Get( ses->numList, i ),
-			15
+			15,
+			0
 		);
 		
 		// Center image window
@@ -402,7 +408,8 @@ void CreateWindows_SbCommand_Number( sbCmd_Number_Session *ses ) {
 			SB_DIMTYPE_FFII_BL,
 			&dims,
 			L"<",
-			15
+			15,
+			0
 		);
 
 		// Right Arrow
@@ -414,7 +421,8 @@ void CreateWindows_SbCommand_Number( sbCmd_Number_Session *ses ) {
 			SB_DIMTYPE_FFII_BL,
 			&dims,
 			L">",
-			15
+			15,
+			0
 		);
 
 		// Page counter window
@@ -426,7 +434,8 @@ void CreateWindows_SbCommand_Number( sbCmd_Number_Session *ses ) {
 			SB_DIMTYPE_FFII_BL,
 			&dims,
 			L"0 of 0",
-			15
+			15,
+			0
 		);
 
 		dims.floatDims[0] = 1.0f;
@@ -438,7 +447,8 @@ void CreateWindows_SbCommand_Number( sbCmd_Number_Session *ses ) {
 			SB_DIMTYPE_FFII_BR,
 			&dims,
 			L"Downloaded: 0/0",
-			15
+			15,
+			0
 		);
 
 		SBWindows.setOut( lArrow, SbNumCmdEvents.prevPage );
@@ -650,7 +660,8 @@ void sbCmd_Download( sbWnd *viewer, sbWnd *logger, wchar_t *text ) {
 				SB_DIMTYPE_FIII_TL,
 				&dims,
 				L"Enter an absolute path for permanant downloads:",
-				15
+				15,
+				0
 			);
 
 			dims.intDims[1] = SB_CENTER_DIM( 170 );
@@ -662,7 +673,8 @@ void sbCmd_Download( sbWnd *viewer, sbWnd *logger, wchar_t *text ) {
 				SB_DIMTYPE_FIII_TL,
 				&dims,
 				L"Placeholder fail string",
-				15
+				15,
+				0
 			);
 			SBWindows.setCreateMode( SBWND_CREATEMODE_SHOW );
 
@@ -674,7 +686,8 @@ void sbCmd_Download( sbWnd *viewer, sbWnd *logger, wchar_t *text ) {
 				SB_DIMTYPE_FIII_TR,
 				&dims,
 				L"Close",
-				15
+				15,
+				1
 			);
 
 			SBWindows.appendReference( close, jmp );
@@ -729,7 +742,8 @@ void sbCmd_Download( sbWnd *viewer, sbWnd *logger, wchar_t *text ) {
 			SB_DIMTYPE_FFII_TL,
 			&dims,
 			L"Loading...",
-			15
+			15,
+			0
 		);
 	}
 
@@ -1078,7 +1092,8 @@ void CreateStaticWindows_SbCommand_Download_Ses( sbCmd_Download_Session *ses ) {
 		SB_DIMTYPE_FIII_TL,
 		&dims,
 		L"Fullscreen",
-		15
+		15,
+		1
 	);
 
 	// lArrow
@@ -1089,7 +1104,8 @@ void CreateStaticWindows_SbCommand_Download_Ses( sbCmd_Download_Session *ses ) {
 		SB_DIMTYPE_FIII_TL,
 		&dims,
 		L"<",
-		15
+		15,
+		1
 	);
 
 	// rArrow
@@ -1100,7 +1116,8 @@ void CreateStaticWindows_SbCommand_Download_Ses( sbCmd_Download_Session *ses ) {
 		SB_DIMTYPE_FIII_TL,
 		&dims,
 		L">",
-		15
+		15,
+		1
 	);
 
 	// close button
@@ -1111,7 +1128,8 @@ void CreateStaticWindows_SbCommand_Download_Ses( sbCmd_Download_Session *ses ) {
 		SB_DIMTYPE_FIII_TR,
 		&dims,
 		L"Close",
-		15
+		15,
+		1
 	);
 
 	// Function binding and reference appending
@@ -1152,7 +1170,8 @@ void CreateDynamicWindows_SbCommand_Download_Ses( sbCmd_Download_Session *ses ) 
 			SB_DIMTYPE_FIII_TL,
 			&dims,
 			n,
-			15
+			15,
+			0
 		);
 
 		// Cover window
@@ -1211,7 +1230,8 @@ void CreateDynamicWindows_SbCommand_Download_Ses( sbCmd_Download_Session *ses ) 
 			SB_DIMTYPE_FFII_TL,
 			&dims,
 			L"Progress",
-			15
+			15,
+			0
 		);
 
 		// Progress bar
@@ -1243,7 +1263,8 @@ void CreateDynamicWindows_SbCommand_Download_Ses( sbCmd_Download_Session *ses ) 
 			SB_DIMTYPE_FFII_BL,
 			&dims,
 			progmsg,
-			15
+			15,
+			0
 		);
 
 		// Add all to window lists
@@ -1349,7 +1370,8 @@ void sbCmd_Chconf( sbWnd *viewer, sbWnd *logger, wchar_t *text ) {
 			SB_DIMTYPE_FIII_TL,
 			&dims,
 			L"Configuration Editor",
-			15
+			15,
+			0
 		);
 
 		// "Permanant download path" message
@@ -1361,7 +1383,8 @@ void sbCmd_Chconf( sbWnd *viewer, sbWnd *logger, wchar_t *text ) {
 			SB_DIMTYPE_FIII_TL,
 			&dims,
 			L"Permanent download path: ",
-			15
+			15,
+			0
 		);
 
 		// Permanant download path textbox
@@ -1392,7 +1415,8 @@ void sbCmd_Chconf( sbWnd *viewer, sbWnd *logger, wchar_t *text ) {
 			SB_DIMTYPE_FIII_TL,
 			&dims,
 			L"placeholder",
-			15
+			15,
+			0
 		);
 		SBWindows.setCreateMode( SBWND_CREATEMODE_SHOW );
 
@@ -1405,7 +1429,8 @@ void sbCmd_Chconf( sbWnd *viewer, sbWnd *logger, wchar_t *text ) {
 			SB_DIMTYPE_FFII_BR,
 			&dims,
 			L"Confirm",
-			15
+			15,
+			1
 		);
 
 		// Reference appending and function binding
@@ -1471,6 +1496,10 @@ void Confirm_SbCmd_Chconf( sbWnd *button, void *unused ) {
 }
 
 void sbCmd_Search( sbWnd *viewer, sbWnd *logger, wchar_t *text ) {
+	/*
+	 * Drafting for search command
+	 * 
+	 */
 	return;
 }
 

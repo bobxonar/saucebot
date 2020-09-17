@@ -183,7 +183,6 @@ void RegisterClasses( void ) {
 	string.lpfnWndProc = StringProc;
 	string.hInstance = inst;
 	string.lpszClassName = SbGUIMaster.WindowClassNameArray[ STRING_WINDOW ];
-	string.hbrBackground = white;
 
 	progbar.cbSize = sizeof( WNDCLASSEXW );
 	progbar.lpfnWndProc = ProgressBarProc;
