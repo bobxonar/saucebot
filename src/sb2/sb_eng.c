@@ -409,7 +409,7 @@ void CreateWindows_SbCommand_Number( sbCmd_Number_Session *ses ) {
 			&dims,
 			L"<",
 			15,
-			0
+			1
 		);
 
 		// Right Arrow
@@ -422,7 +422,7 @@ void CreateWindows_SbCommand_Number( sbCmd_Number_Session *ses ) {
 			&dims,
 			L">",
 			15,
-			0
+			1
 		);
 
 		// Page counter window
