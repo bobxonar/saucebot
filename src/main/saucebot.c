@@ -12,16 +12,41 @@
 
 int WINAPI WinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow ) {
 	// As of 0.3: 6080 lines of code
+	// I have progressed past 0.3, so there is more than 6080 lines of code.
+	// Keep this message as a tracker for LOC in versions.
 
 
 	/*
 	 * The TODOs for saucebot go here
-	 * -> Download manager
-	 *     -> Fairly self-explanatory--can delete, view, whatever
 	 * 
 	 * -> General UI improvements
+	 *     -> Semantic change: change in/out functions to a single signal function.
 	 *     -> Fix unnecessary flickering in images - stop redrawing windows so often.
 	 *     -> Fix basic text window performance - make one DrawTextEx call instead of several per paint message.
+	 * 
+	 * -> New window classes
+	 *     -> The container window--a window made to hold other windows
+	 *     -> Why I never thought of this earlier I have no idea
+	 *     -> Signals when mouse wheel
+	 * 
+	 * -> The dimensioning system
+	 *     -> Make a seperate dimension evaluator function
+	 *     -> Add sibling-relative positioning
+	 *     -> Make a dimension struct instead of two variables
+	 *     -> Add integer offsets and relative window to this struct
+	 *     -> Corner specifications should evaluate to the cornet of the existing window, not the window to be created.
+	 * 
+	 * -> Download manager (lsdownload command)
+	 *     -> Fairly self-explanatory--can delete, view, whatever
+	 * 
+	 * -> Search command
+	 *     -> Ideas?
+	 * 
+	 * -> 0.4
+	 *     -> Need a name for it
+	 *     -> Should have all the specified improvements/commands above.
+	 *     -> Start telling people about it outsite of 4ch once this version is done.
+	 *     -> When this is finished, the app should be superior to a browser (mostly).
 	 */
 	
 	#ifdef RELEASE
