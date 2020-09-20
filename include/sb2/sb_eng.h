@@ -71,7 +71,9 @@ typedef struct {
 
 	struct {
 
-		struct sbcmdnumsession *( *Begin )( sbWnd *, sbList * );
+		sbList *( *CopyDownloads )( sbList * );
+
+		struct sbcmdnumsession *( *Begin )( sbWnd *, sbList *, sbList * );
 
 		void ( *CreateWindows )( struct sbcmdnumsession * );
 
@@ -201,7 +203,8 @@ typedef struct sbcmdnumsession {
 void initEngine( void );
 
 void sbCmd_Number( sbWnd *, sbWnd *, wchar_t * );
-sbCmd_Number_Session *Begin_SbCommand_Number( sbWnd *, sbList * );
+sbList *CopyDownloads_SbCommand_Number( sbList * );
+sbCmd_Number_Session *Begin_SbCommand_Number( sbWnd *, sbList *, sbList * );
 void CreateWindows_SbCommand_Number( sbCmd_Number_Session * );
 void End_SbCommand_Number( sbCmd_Number_Session * );
 

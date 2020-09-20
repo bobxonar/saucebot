@@ -102,21 +102,21 @@ void initSB_conTest( void *unused ) {
 		wchar_t msg[128] = { 0 };
 		swprintf( msg, 128, L"Failure to connect to nhentai.net: status code %ls", buf );
 		MessageBoxW( NULL, msg, L"Connection Failure", MB_OK | MB_ICONEXCLAMATION );
-		exit( EXIT_FAILURE );
+		SaucebotMaster.offlineMode = 1;
 	}
 
 	if ( wcscmp( imgBuf, httpOk ) ) {
 		wchar_t msg[128] = { 0 };
-		swprintf( msg, 128, L"Failure to connect to i.nhentai.net: status code %ls", imgBuf );
+		swprintf( msg, 128, L"Failure to connect to i.nhentai.net: status code %ls. Offline mode enabled.", imgBuf );
 		MessageBoxW( NULL, msg, L"Connection Failure", MB_OK | MB_ICONEXCLAMATION );
-		exit( EXIT_FAILURE );
+		SaucebotMaster.offlineMode = 1;
 	}
 
 	if ( wcscmp( coverBuf, httpOk ) ) {
 		wchar_t msg[128] = { 0 };
-		swprintf( msg, 128, L"Failure to connect to t.nhentai.net: status code %ls", coverBuf );
+		swprintf( msg, 128, L"Failure to connect to t.nhentai.net: status code %ls. Offline mode enabled.", coverBuf );
 		MessageBoxW( NULL, msg, L"Connection Failure", MB_OK | MB_ICONEXCLAMATION );
-		exit( EXIT_FAILURE );
+		SaucebotMaster.offlineMode = 1;
 	}
 
 	WinHttpCloseHandle( req );

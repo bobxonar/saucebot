@@ -15,7 +15,9 @@ typedef struct {
         conCovers,
         conImages;
     
-    int cmdOn;
+    int
+        offlineMode, // Set to 1 for offline mode.
+        cmdOn;
     uint32_t nMax;
 } SbMasterStruct;
 

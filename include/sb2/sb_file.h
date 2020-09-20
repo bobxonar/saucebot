@@ -13,6 +13,7 @@ typedef struct {
 		wchar_t *( *getAppDataPath )( void );
 
 		void ( *recursiveDelete )( wchar_t * );
+		int ( *copyDir )( wchar_t *, wchar_t * );
 		void ( *readString )( FILE *, wchar_t *, size_t );
 
 		// Tries to create an absolute path. Returns 1 or 2 on failiure.
@@ -38,6 +39,7 @@ void initSbFile( void );
 
 wchar_t *sbFile_GetAppDataPath( void );
 void sbFile_ReadString( FILE *, wchar_t *, size_t );
+int sbFile_copyDir( wchar_t *, wchar_t * );
 void sbFile_RecursiveDelete( wchar_t * );
 int sbFile_createAbsPath( wchar_t * );
 

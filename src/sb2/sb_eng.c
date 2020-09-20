@@ -22,6 +22,7 @@ SbEngineFnStruct SbEngine;
 // #define PRINT_ERROR
 
 void initEngine( void ) {
+	Commands.Number.CopyDownloads = CopyDownloads_SbCommand_Number;
 	Commands.Number.Begin = Begin_SbCommand_Number;
 	Commands.Number.CreateWindows = CreateWindows_SbCommand_Number;
 	Commands.Number.End = End_SbCommand_Number;
@@ -131,6 +132,7 @@ void sbCmd_Number( sbWnd *viewer, sbWnd *logger, wchar_t *text ) {
 
 	SaucebotMaster.cmdOn = 1;
 	TDownloads.create( numList );
+	sbList *pgsPerNum =  Commands.Number.CopyDownloads( numList );
 
 	// Set up windows and bind functions to said windows.
 	sbWnd_Dims dims = { 0 };
@@ -225,12 +227,14 @@ void sbCmd_Number( sbWnd *viewer, sbWnd *logger, wchar_t *text ) {
 	SBWindows.appendReference( closeButton, viewMaster );
 	SBWindows.appendReference( fscreenButton, viewMaster );
 
-	sbCmd_Number_Session *ses = Commands.Number.Begin( viewMaster, numList );
+	sbCmd_Number_Session *ses = Commands.Number.Begin( viewMaster, numList, pgsPerNum );
+	Lists.Delete( pgsPerNum );
 	SBStringWindows.destroy( load );
 	SBWindows.appendReference( viewMaster, ses );
 
 	Commands.Number.CreateWindows( ses );
-	EngineOps.NumCmd.download( ses );
+	if ( !SaucebotMaster.offlineMode )
+		EngineOps.NumCmd.download( ses );
 	EngineOps.NumCmd.updateWindows( ses );
 	return;
 }
@@ -247,7 +251,31 @@ void create_SbEngine_TDownload( sbList *nlist ) {
 	} while ( ++i <= Lists.Size( nlist ) );
 }
 
-sbCmd_Number_Session *Begin_SbCommand_Number( sbWnd *master, sbList *nlist ) {
+sbList *CopyDownloads_SbCommand_Number( sbList *numList ) {
+	sbList *fin = Lists.New( );
+	wchar_t *path = EngineOps.DldCmd.getPermDldPath( );
+
+	for ( uint16_t i = 0; i < Lists.Size( numList ); ++i ) {
+		if ( path == NULL ) {
+			Lists.Add( fin, ( void * )0 );
+			continue;
+		}
+
+		wchar_t
+			dst[ MAX_PATH ] = { 0 },
+			*n = Lists.Get( numList, i ),
+			src[ MAX_PATH ] = { 0 };
+		swprintf( dst, MAX_PATH, L"TempDownloads\\%s", n );
+		swprintf( src, MAX_PATH, L"%s\\%s", path, n );
+
+		uint64_t c = Files.copyDir( dst, src );
+		c -= c > 0 ? 1 : 0;
+		Lists.Add( fin, ( void * )c );
+	}
+	return fin;
+}
+
+sbCmd_Number_Session *Begin_SbCommand_Number( sbWnd *master, sbList *nlist, sbList *pgsDld ) {
 	sbCmd_Number_Session *ses = newptr( sbCmd_Number_Session );
 	uint16_t nCt = Lists.Size( nlist );
 
@@ -263,6 +291,10 @@ sbCmd_Number_Session *Begin_SbCommand_Number( sbWnd *master, sbList *nlist ) {
 
 	ses->tDownloads = newarr( sb_TempDownload, nCt );
 	TDownloads.init( ses->tDownloads, nlist );
+	for ( uint16_t i = 0; i < nCt; ++i ) {
+		uint16_t a = ( uint64_t )Lists.Get( pgsDld, i );
+		ses->tDownloads[i].nPgs = ( uint64_t )Lists.Get( pgsDld, i );
+	}
 
 	ses->fscreen = newptr( sbWnd_Dims );
 	ses->nfscreen = newptr( sbWnd_Dims );
@@ -274,13 +306,41 @@ sbCmd_Number_Session *Begin_SbCommand_Number( sbWnd *master, sbList *nlist ) {
 	SBWindows.getDims( SBWindows.getParent( master ), &ses->nfscreenType, ses->nfscreen );
 
 	for ( int i = 0; i < nCt; ++i )
-		TDownloads.advance( ( ses->tDownloads + i ) );
+		if ( ses->tDownloads[i].nPgs == 0 && !SaucebotMaster.offlineMode )
+			TDownloads.advance( ( ses->tDownloads + i ) );
 
 	return ses;
 }
 
 void init_SbEngine_TDownload( sb_TempDownload *dArr, sbList *nlist ) {
 	for ( uint16_t i = 0; i < Lists.Size( nlist ); ++i ) {
+		// Check for offline mode, if so input page count from info file (if there is one) into tpgs.
+		if ( SaucebotMaster.offlineMode ) {
+			wchar_t
+				*n = Lists.Get( nlist, i ),
+				path[ MAX_PATH ] = { 0 };
+			swprintf( path, MAX_PATH, L"TempDownloads\\%s\\info", n );
+
+			{
+				WIN32_FIND_DATAW fdt = { 0 };
+				HANDLE ses = FindFirstFileW( path, &fdt );
+				if ( GetLastError( ) == ERROR_FILE_NOT_FOUND )
+					continue;
+				FindClose( ses );
+			}
+
+			{
+				FILE *f = _wfopen( path, L"r" );
+				HTML_ops.seekString( f, L"pages" );
+				wchar_t *pg = HTML_ops.readBetween( f, L'\"', L'\"' );
+				swscanf( pg, L"%u", &dArr[i].tPgs );
+				fclose( f );
+				free( pg );
+			}
+
+			continue;
+		}
+
 		// Get number
 		wchar_t *n = Lists.Get( nlist, i );
 		wcscpy( dArr[i].number, n );
@@ -492,6 +552,13 @@ void updateWindows_SbEngine_NumCmd( sbCmd_Number_Session *ses ) {
 			swprintf( newCounter, 64, L"%d of %d", pg, dld.tPgs );
 			SBStringWindows.changeString( wnd, newCounter );
 		}
+
+		if ( !wcscmp( L"status bar", name ) ) {
+			sb_TempDownload dld = ses->tDownloads[ ses->idx ];
+			wchar_t msg[ 64 ] = { 0 };
+			swprintf( msg, 64, L"Downloaded: %d/%d", dld.nPgs, dld.tPgs );
+			SBStringWindows.changeString( wnd, msg );
+		}
 	}
 }
 
@@ -586,6 +653,12 @@ void showWindows_SbEngine_NumCmd( sbCmd_Number_Session *ses ) {
 }
 
 void sbCmd_Download( sbWnd *viewer, sbWnd *logger, wchar_t *text ) {
+	// Don't even try if offline mode is on.
+	if ( SaucebotMaster.offlineMode ) {
+		SBBasicTextWindows.draw( logger, L"Cannot download, offline mode on." );
+		return;
+	}
+
 	// Begin parsing
 	SBBasicTextWindows.clear( viewer );
 	wchar_t *num = wcstok( text, L" " );
@@ -820,8 +893,11 @@ void Close_SbCommand_Download( sbWnd *wnd, void *unused ) {
 
 wchar_t *getPermDldPath_SbEngine_DldCmd( void ) {
 	FILE *f = _wfopen( L"config", L"r" );
-	HTML_ops.seekString( f, L"permdldpath" );
-	return HTML_ops.readBetween( f, L'\"', L'\"' );
+	int a = HTML_ops.seekString( f, L"permdldpath" );
+	if ( !a )
+		return HTML_ops.readBetween( f, L'\"', L'\"' );
+	
+	return NULL;
 }
 
 void remDupNumbers_SbEngine_DldCmd( sbList *nlist ) {
@@ -874,6 +950,8 @@ void create_SbEngine_PDownload( sbList *nlist ) {
 		wchar_t *n = Lists.Get( nlist, i );
 		swprintf( path, MAX_PATH, L"%s\\%s", ppath, n );
 		CreateDirectoryW( path, NULL );
+		wcscat( path, L"\\info" );
+		fclose( _wfopen( path, L"a" ) );
 	}
 }
 
@@ -881,10 +959,13 @@ void init_SbEngine_PDownload( sb_PermDownload *arr, sbList *nlist ) {
 	// Assumes memory already allocated
 	wchar_t *ppath = EngineOps.DldCmd.getPermDldPath( );
 	for ( uint16_t i = 0; i < Lists.Size( nlist ); ++i ) {
-		wchar_t *n = Lists.Get( nlist, i );
+		wchar_t
+			infoPath[ MAX_PATH ] = { 0 },
+			*n = Lists.Get( nlist, i );
 
 		wcscpy( arr[i].number, n );
 		swprintf( arr[i].path, MAX_PATH, L"%s\\%s", ppath, n );
+		swprintf( infoPath, MAX_PATH, L"%s\\%s\\info", ppath, n );
 
 		SbNet.numget( n, L"temp.txt" ); // Use main site for title/artist/tags
 
@@ -931,6 +1012,13 @@ void init_SbEngine_PDownload( sb_PermDownload *arr, sbList *nlist ) {
 			HTML_ops.seekString( f, L"span class=\"name\"" );
 			wchar_t *pg = HTML_ops.readBetween( f, L'>', L'<' );
 			swscanf( pg, L"%u", &arr[i].tPgs );
+
+			{
+				FILE *f = _wfopen( infoPath, L"a" );
+				fwprintf( f, L"pages=\"%s\"\n", pg );
+				fclose( f );
+			}
+
 			free( pg );
 		}
 		

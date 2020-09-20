@@ -179,7 +179,7 @@ wString getString_SbTextbox( TBOX sbWnd *wnd ) {
 }
 
 void sendString_SbTextbox( TBOX sbWnd *wnd, wString str ) {
-	if ( wnd->type != TEXTBOX_WINDOW )
+	if ( wnd->type != TEXTBOX_WINDOW || str == NULL )
 		return;
 
 	size_t len = wcslen( str );

@@ -12,6 +12,7 @@ SbFileFnStruct SbFile;
 
 void initSbFile( void ) {
 	Files.getAppDataPath = sbFile_GetAppDataPath;
+	Files.copyDir = sbFile_copyDir;
 	Files.recursiveDelete = sbFile_RecursiveDelete;
 	Files.readString = sbFile_ReadString;
 	Files.createAbsPath = sbFile_createAbsPath;
@@ -29,6 +30,46 @@ wchar_t *sbFile_GetAppDataPath( void ) {
 	return path;
 }
 
+int sbFile_copyDir( wchar_t *dstDir, wchar_t *srcDir ) {
+	if ( GetFileAttributesW( srcDir ) == INVALID_FILE_ATTRIBUTES )
+		return 0; // You may think that this is stupid, but I won't have to use FindFirstFile in the other function.
+
+	if ( GetFileAttributesW( dstDir ) == INVALID_FILE_ATTRIBUTES )
+		CreateDirectoryW( dstDir, NULL );
+
+	wchar_t finder[ MAX_PATH ] = { 0 };
+	swprintf( finder, MAX_PATH, L"%s\\*", srcDir );
+
+	WIN32_FIND_DATAW fdt = { 0 };
+	HANDLE ses = FindFirstFileW( finder, &fdt );
+	int ct = 0;
+	
+	while ( GetLastError( ) != ERROR_NO_MORE_FILES ) {
+		if ( !wcscmp( fdt.cFileName, L"." )  || !wcscmp( fdt.cFileName, L".." ) )
+			goto nextfile;
+
+		wchar_t 
+			dstName[ MAX_PATH ] = { 0 },
+			srcName[ MAX_PATH ] = { 0 };
+		swprintf( dstName, MAX_PATH, L"%s\\%s", dstDir, fdt.cFileName );
+		swprintf( srcName, MAX_PATH, L"%s\\%s", srcDir, fdt.cFileName );
+
+		if ( GetFileAttributesW( srcName ) & FILE_ATTRIBUTE_DIRECTORY ) {
+			CreateDirectoryW( dstName, NULL );
+			sbFile_copyDir( dstName, srcName );
+			goto nextfile;
+		}
+
+		CopyFileW( srcName, dstName, FALSE );
+		ct++;
+
+		nextfile:
+		FindNextFileW( ses, &fdt );
+	}
+
+	SetLastError( 0 );
+	return ct;
+}
 
 void sbFile_RecursiveDelete( wchar_t *folder ) {
 	SetLastError( 0 );
@@ -97,6 +138,9 @@ void sbFile_ReadString( FILE *fle, wchar_t *buf, size_t len ) {
 
 int sbFile_createAbsPath( wchar_t *path ) {
 	size_t l = wcslen( path );
+	if ( !l )
+		return 1;
+
 	wchar_t
 		driveLetter[4] = { 0 },
 		*pathr = wcsdup( path ), // wcstok modifies input string, need this
