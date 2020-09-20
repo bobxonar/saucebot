@@ -1618,6 +1618,7 @@ void sbCmd_Info( sbWnd *viewer, sbWnd *logger, wchar_t *text ) {
 	SBBasicTextWindows.draw( viewer, L"    Downloads the numbers specified into a permanant download location." );
 	SBBasicTextWindows.draw( viewer, L"    saucebot will prompt you for a location." );
 	SBBasicTextWindows.draw( viewer, L"    Enter a path beginning with a drive letter." );
+	SBBasicTextWindows.draw( viewer, L"    So long as there are numbers in the path specified, the number command will be aware of them." );
 	SBBasicTextWindows.draw( viewer, L"    Your username is located at C:\\Users\\[name]." );
 	SBBasicTextWindows.draw( viewer, L"3. Chconf:" );
 	SBBasicTextWindows.draw( viewer, L"    chconf" );
