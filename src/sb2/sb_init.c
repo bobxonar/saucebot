@@ -100,7 +100,7 @@ void initSB_conTest( void *unused ) {
 	wchar_t *httpOk = L"200";
 	if ( wcscmp( buf, httpOk ) ) {
 		wchar_t msg[128] = { 0 };
-		swprintf( msg, 128, L"Failure to connect to nhentai.net: status code %ls", buf );
+		swprintf( msg, 128, L"Failure to connect to nhentai.net: status code %ls. Offline mode enabled.", buf );
 		MessageBoxW( NULL, msg, L"Connection Failure", MB_OK | MB_ICONEXCLAMATION );
 		SaucebotMaster.offlineMode = 1;
 	}
