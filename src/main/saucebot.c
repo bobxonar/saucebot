@@ -20,15 +20,23 @@ int WINAPI WinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
 	 * The TODOs for saucebot go here
 	 * 
 	 * -> General UI improvements
-	 *     -> Semantic change: change in/out functions to a single signal function.
-	 *     -> Fix unnecessary flickering in images - stop redrawing windows so often.
 	 *     -> Fix basic text window performance - make one DrawTextEx call instead of several per paint message.
 	 * 
-	 * -> New window classes
+	 * -> Window classes
 	 *     -> The container window--a window made to hold other windows
 	 *     -> Why I never thought of this earlier I have no idea
 	 *     -> Signals when mouse wheel
 	 *     -> Full support for origin transformations (on the dc level)--when origin is transformed, signal children.
+	 * 
+	 *     -> Make the basic text window scrollable
+	 *         -> Give this class supporter windows that it holds in its specific data
+	 *         -> Make the first sbgui-supplied signal function
+	 *         -> Should be new classes for these windows
+	 * 
+	 *     -> Drafting the scrolling stuff
+	 *         -> Constant-width
+	 *         -> A circle with 2 arcs above and below (the arcs change distance)
+	 *         -> Need icons for scroll up and scroll down at the top and bottom of window
 	 * 
 	 * -> The dimensioning system
 	 *     -> Make a seperate dimension evaluator function

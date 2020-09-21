@@ -115,7 +115,6 @@ LRESULT CALLBACK TextboxProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam 
 			UpdateTextboxInfo( wnd );
 
 			InvalidateRect( hwnd, NULL, TRUE );
-			UpdateWindow( hwnd );
 
 			if ( GetFocus( ) == hwnd ) {
 				CreateCaret( hwnd, NULL, 0, info->currentFont->lfHeight );
@@ -330,7 +329,6 @@ LRESULT CALLBACK TextWndProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam 
 			Lists.Add( info->text, ( void * )wParam );
 
 			InvalidateRect( hwnd, NULL, TRUE );
-			UpdateWindow( hwnd );
 
 			break;
 		}
@@ -343,7 +341,6 @@ LRESULT CALLBACK TextWndProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam 
 			info->text = Lists.New( );
 
 			InvalidateRect( hwnd, NULL, TRUE );
-			UpdateWindow( hwnd );
 
 			break;
 		}
@@ -357,7 +354,6 @@ LRESULT CALLBACK TextWndProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam 
 			info->currentFont->lfHeight = info->fontSize;
 
 			InvalidateRect( hwnd, NULL, TRUE );
-			UpdateWindow( hwnd );
 
 			break;
 		}
@@ -447,7 +443,6 @@ LRESULT CALLBACK RestrictedImageProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM
 			break;
 		}
 		case WM_SIZE:
-			InvalidateRect( hwnd, NULL, TRUE );
 			UpdateWindow( hwnd );
 			break;
 		case WM_CLOSE:
@@ -644,7 +639,6 @@ LRESULT CALLBACK StringProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 			SBWindows.changeDims( wnd, wnd->dimType, &newSize );
 
 			InvalidateRect( hwnd, NULL, TRUE );
-			UpdateWindow( hwnd );
 
 			break;
 		}
@@ -714,7 +708,6 @@ LRESULT CALLBACK StringProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 
 		case WM_SIZE:
 			InvalidateRect( hwnd, NULL, TRUE );
-			UpdateWindow( hwnd );
 			break;
 		case WM_CLOSE:
 			DestroyWindow( hwnd );
@@ -749,7 +742,6 @@ LRESULT CALLBACK ProgressBarProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
 
 		case WM_SIZE:
 			InvalidateRect( hwnd, NULL, TRUE );
-			UpdateWindow( hwnd );
 			break;
 		case WM_CLOSE:
 			DestroyWindow( hwnd );
@@ -886,8 +878,6 @@ BOOL CALLBACK ChildSizingProc( IN HWND hwnd, IN LPARAM lParam ) {
 		finDims[1] -= finDims[3];
 
 	MoveWindow( hwnd, finDims[0], finDims[1], finDims[2], finDims[3], TRUE );
-	InvalidateRect( hwnd, NULL, TRUE );
-	UpdateWindow( hwnd );
 	SendMessage( hwnd, SBM_SIZE, 0, 0 );
 	return 1;
 }
@@ -900,7 +890,6 @@ BOOL CALLBACK ChildFontChangeProc( IN HWND hwnd, IN LPARAM lParam) {
 BOOL CALLBACK ChildZOrderProc( IN HWND hwnd, IN LPARAM lParam ) {
 	BringWindowToTop( hwnd );
 	InvalidateRect( hwnd, NULL, TRUE );
-	UpdateWindow( hwnd );
 	return TRUE;
 }
 
