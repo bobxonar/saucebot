@@ -191,7 +191,7 @@ LRESULT CALLBACK TextboxProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam 
 			ShowCaret( hwnd );
 
 			if ( send )
-				SBWindows.out( wnd, wnd, str );
+				SBWindows.signalFn( wnd, wnd, str );
 			else
 				free( str );
 			
@@ -318,7 +318,7 @@ LRESULT CALLBACK TextWndProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam 
 
 		case WM_LBUTTONDOWN: {
 			sbWnd *wnd = Maps.Search( SbGUIMaster.WindowMap, hwnd );
-			SBWindows.out( wnd, wnd, NULL );
+			SBWindows.signalFn( wnd, wnd, NULL );
 			SetFocus( hwnd );
 			break;
 		}
@@ -555,10 +555,10 @@ LRESULT CALLBACK ViewcmdMasterProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM l
 			sbWnd *wnd = Maps.Search( SbGUIMaster.WindowMap, hwnd );
 			switch( wParam ) {
 				case VK_LEFT:
-					SBWindows.in( wnd, wnd, ( void * )SBEVT_PREVPAGE );
+					SBWindows.signalFn( wnd, wnd, ( void * )SBEVT_PREVPAGE );
 					break;
 				case VK_RIGHT:
-					SBWindows.in( wnd, wnd, ( void * )SBEVT_NEXTPAGE );
+					SBWindows.signalFn( wnd, wnd, ( void * )SBEVT_NEXTPAGE );
 					break;
 			}
 			break;
@@ -708,7 +708,7 @@ LRESULT CALLBACK StringProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 			InvalidateRect( hwnd, NULL, TRUE );
 			UpdateWindow( hwnd ); // Cannot assume out function will return quickly
 
-			SBWindows.out( wnd, wnd, NULL );
+			SBWindows.signalFn( wnd, wnd, NULL );
 			break;
 		}
 

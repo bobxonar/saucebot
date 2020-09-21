@@ -25,32 +25,32 @@ void initEvents( void ) {
 
 void prevNum_NumCmdEvent( sbWnd *wnd, void *data ) {
 	sbWnd *sessionWindow = SBWindows.getReference( wnd, 0 );
-	SBWindows.in( sessionWindow, sessionWindow, ( void * )SBEVT_PREVNUM );
+	SBWindows.signalFn( sessionWindow, sessionWindow, ( void * )SBEVT_PREVNUM );
 }
 
 void nextNum_NumCmdEvent( sbWnd *wnd, void *data ) {
 	sbWnd *sessionWindow = SBWindows.getReference( wnd, 0 );
-	SBWindows.in( sessionWindow, sessionWindow, ( void * )SBEVT_NEXTNUM );
+	SBWindows.signalFn( sessionWindow, sessionWindow, ( void * )SBEVT_NEXTNUM );
 }
 
 void prevPage_NumCmdEvent( sbWnd *wnd, void *data ) {
 	sbWnd *sessionWindow = SBWindows.getReference( wnd, 0 );
-	SBWindows.in( sessionWindow, sessionWindow, ( void * )SBEVT_PREVPAGE );
+	SBWindows.signalFn( sessionWindow, sessionWindow, ( void * )SBEVT_PREVPAGE );
 }
 
 void nextPage_NumCmdEvent( sbWnd *wnd, void *data ) {
 	sbWnd *sessionWindow = SBWindows.getReference( wnd, 0 );
-	SBWindows.in( sessionWindow, sessionWindow, ( void * )SBEVT_NEXTPAGE );
+	SBWindows.signalFn( sessionWindow, sessionWindow, ( void * )SBEVT_NEXTPAGE );
 }
 
 void close_NumCmdEvent( sbWnd *wnd, void *data ) {
 	sbWnd *sessionWindow = SBWindows.getReference( wnd, 0 );
-	SBWindows.in( sessionWindow, sessionWindow, ( void * )SBEVT_CLOSE );
+	SBWindows.signalFn( sessionWindow, sessionWindow, ( void * )SBEVT_CLOSE );
 }
 
 void fullscreen_NumCmdEvent( sbWnd *wnd, void *data ) {
 	sbWnd *sessionWindow = SBWindows.getReference( wnd, 0 );
-	SBWindows.in( sessionWindow, sessionWindow, ( void * )SBEVT_FULLSCREEN );
+	SBWindows.signalFn( sessionWindow, sessionWindow, ( void * )SBEVT_FULLSCREEN );
 }
 
 void numCmdProc( sbWnd *wnd, void *msg ) {
@@ -146,22 +146,22 @@ void numCmdProc( sbWnd *wnd, void *msg ) {
 
 void prevNum_DldCmdEvent( sbWnd *wnd, void *data ) {
 	sbWnd *sesWnd = SBWindows.getReference( wnd, 0 );
-	SBWindows.in( sesWnd, sesWnd, ( void * )SBEVT_D_PREVNUM );
+	SBWindows.signalFn( sesWnd, sesWnd, ( void * )SBEVT_D_PREVNUM );
 }
 
 void nextNum_DldCmdEvent( sbWnd *wnd, void *data ) {
 	sbWnd *sesWnd = SBWindows.getReference( wnd, 0 );
-	SBWindows.in( sesWnd, sesWnd, ( void * )SBEVT_D_NEXTNUM );
+	SBWindows.signalFn( sesWnd, sesWnd, ( void * )SBEVT_D_NEXTNUM );
 }
 
 void fullscreen_DldCmdEvent( sbWnd *wnd, void *data ) {
 	sbWnd *sesWnd = SBWindows.getReference( wnd, 0 );
-	SBWindows.in( sesWnd, sesWnd, ( void * )SBEVT_D_FULLSCREEN );
+	SBWindows.signalFn( sesWnd, sesWnd, ( void * )SBEVT_D_FULLSCREEN );
 }
 
 void close_DldCmdEvent( sbWnd *wnd, void *data ) {
 	sbWnd *sesWnd = SBWindows.getReference( wnd, 0 );
-	SBWindows.in( sesWnd, sesWnd, ( void * )SBEVT_D_CLOSE );
+	SBWindows.signalFn( sesWnd, sesWnd, ( void * )SBEVT_D_CLOSE );
 }
 
 void dldCmdProc( sbWnd *wnd, void *msg ) {

@@ -51,13 +51,11 @@ void initWindowFunctions( void ) {
 	SBProgressBarWindows.advance = advance_SbProgressBarWindow;
 	SBDldcmdMasterWindows.create = DldcmdMasterWindowCreator;
 	SBDldcmdMasterWindows.destroy = destroy_SbDldcmdMasterWindow;
-	SBWindows.setIn = SetFunctionIn_AllTypes;
-	SBWindows.setOut = SetFunctionOut_AllTypes;
+	SBWindows.setSignalFn = SetSignalFn_AllTypes;
 	SBWindows.appendReference = appendReference_AllTypes;
 	SBWindows.getReference = getReference_AllTypes;
 	SBWindows.getStringWidth = getStringWidth_AllTypes;
-	SBWindows.in = CallFunctionIn_AllTypes;
-	SBWindows.out = CallFunctionOut_AllTypes;
+	SBWindows.signalFn = CallSignalFn_AllTypes;
 	SBWindows.changeDims = changeDims_AllTypes;
 	SBWindows.toSurface = toSurface_AllTypes;
 	SBWindows.focus = focus_AllTypes;

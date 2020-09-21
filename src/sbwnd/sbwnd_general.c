@@ -65,12 +65,8 @@ void msgloop( void ) {
 	return;
 }
 
-void SetFunctionIn_AllTypes( GENERICWND sbWnd *wnd, WindowFunctionIn func ) {
-	wnd->dataIn = func;
-}
-
-void SetFunctionOut_AllTypes( GENERICWND sbWnd *wnd, WindowFunctionOut func ) {
-	wnd->dataOut = func;
+void SetSignalFn_AllTypes( GENERICWND sbWnd *wnd, sbWndSignalFn func ) {
+	wnd->signalFn = func;
 }
 
 void appendReference_AllTypes( GENERICWND sbWnd *wnd, void *refdata ) {
@@ -131,14 +127,9 @@ sbWnd *getParent_AllTypes( GENERICWND sbWnd *wnd ) {
 	return NULL;
 }
 
-void CallFunctionIn_AllTypes( GENERICWND sbWnd *wnd, GENERICWND sbWnd *wnd_arg, void *data_arg ) {
-	if ( wnd->dataIn != NULL )
-		wnd->dataIn( wnd_arg, data_arg );
-}
-
-void CallFunctionOut_AllTypes( GENERICWND sbWnd *wnd, GENERICWND sbWnd *wnd_arg, void *data_arg ) {
-	if ( wnd->dataOut != NULL )
-		wnd->dataOut( wnd_arg, data_arg );
+void CallSignalFn_AllTypes( GENERICWND sbWnd *wnd, GENERICWND sbWnd *wnd_arg, void *data_arg ) {
+	if ( wnd->signalFn != NULL )
+		wnd->signalFn( wnd_arg, data_arg );
 }
 
 void draw_SbBasicTextWindow( BASICTXTWND sbWnd *wnd, wString str ) {

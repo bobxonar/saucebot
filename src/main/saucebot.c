@@ -28,6 +28,7 @@ int WINAPI WinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
 	 *     -> The container window--a window made to hold other windows
 	 *     -> Why I never thought of this earlier I have no idea
 	 *     -> Signals when mouse wheel
+	 *     -> Full support for origin transformations (on the dc level)--when origin is transformed, signal children.
 	 * 
 	 * -> The dimensioning system
 	 *     -> Make a seperate dimension evaluator function
@@ -71,7 +72,7 @@ int WINAPI WinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
 	moreDims.intDims[1] = 0;
 	sbWnd *fourth = SBBasicTextWindows.create( GetHWND( first ), L"basicwnd-1", SB_DIMTYPE_IIFF_TL, &moreDims, 15 );
 
-	SBWindows.setOut( second, sbEntry );
+	SBWindows.setSignalFn( second, sbEntry );
 	SBWindows.appendReference( second, fourth );
 	SBWindows.appendReference( second, third );
 	SBBasicTextWindows.draw( fourth, L"Type a command to get started!" );

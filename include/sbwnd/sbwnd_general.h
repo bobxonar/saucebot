@@ -100,16 +100,11 @@ typedef struct _Saucebot_Window_2 {
 	sbList *referenceList;
 
 	// Function that accepts data, specific to a window type. Can be user-overridden, however.
-	void ( *dataIn )( struct _Saucebot_Window_2 *, void * );
-	
-	// Function that outputs data, specific to a window type. Can be user-overridden, however.
-	void ( *dataOut )( struct _Saucebot_Window_2 *, void * );
+	void ( *signalFn )( struct _Saucebot_Window_2 *, void * );
 
 } sbWnd;
 
-typedef void ( *WindowFunction )( struct _Saucebot_Window_2 *, void * );
-typedef WindowFunction WindowFunctionIn;
-typedef WindowFunction WindowFunctionOut;
+typedef void ( *sbWndSignalFn )( struct _Saucebot_Window_2 *, void * );
 
 typedef struct tboxinfo {
 
@@ -341,14 +336,9 @@ typedef struct {
 	void ( *focus )( sbWnd * );
 
 
-	void ( *in )( sbWnd *, sbWnd *, void * );
+	void ( *signalFn )( sbWnd *, sbWnd *, void * );
 
-	void ( *out )( sbWnd *, sbWnd *, void * );
-
-
-	void ( *setIn )( sbWnd *, WindowFunctionIn );
-
-	void ( *setOut )( sbWnd *, WindowFunctionOut );
+	void ( *setSignalFn )( sbWnd *, sbWndSignalFn );
 
 } SBWindowFnStruct;
 
@@ -373,10 +363,8 @@ void *GetSpecificHandle( GENERICWND sbWnd * );
 
 void msgloop( void );
 
-void SetFunctionIn_AllTypes( GENERICWND sbWnd *, WindowFunctionIn );
-void SetFunctionOut_AllTypes( GENERICWND sbWnd *, WindowFunctionOut );
-void CallFunctionIn_AllTypes( GENERICWND sbWnd *, GENERICWND sbWnd *, void * );
-void CallFunctionOut_AllTypes( GENERICWND sbWnd *, GENERICWND sbWnd *, void * );
+void SetSignalFn_AllTypes( GENERICWND sbWnd *, sbWndSignalFn );
+void CallSignalFn_AllTypes( GENERICWND sbWnd *, GENERICWND sbWnd *, void * );
 
 void appendReference_AllTypes( GENERICWND sbWnd *, void * );
 void *getReference_AllTypes( GENERICWND sbWnd *, uint16_t );

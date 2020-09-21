@@ -216,11 +216,11 @@ void sbCmd_Number( sbWnd *viewer, sbWnd *logger, wchar_t *text ) {
 		0
 	);
 
-	SBWindows.setIn( viewMaster, numCmdProc );
-	SBWindows.setOut( lArrow, SbNumCmdEvents.prevNum );
-	SBWindows.setOut( rArrow, SbNumCmdEvents.nextNum );
-	SBWindows.setOut( closeButton, SbNumCmdEvents.close );
-	SBWindows.setOut( fscreenButton, SbNumCmdEvents.fullscreen );
+	SBWindows.setSignalFn( viewMaster, numCmdProc );
+	SBWindows.setSignalFn( lArrow, SbNumCmdEvents.prevNum );
+	SBWindows.setSignalFn( rArrow, SbNumCmdEvents.nextNum );
+	SBWindows.setSignalFn( closeButton, SbNumCmdEvents.close );
+	SBWindows.setSignalFn( fscreenButton, SbNumCmdEvents.fullscreen );
 
 	SBWindows.appendReference( lArrow, viewMaster );
 	SBWindows.appendReference( rArrow, viewMaster );
@@ -511,8 +511,8 @@ void CreateWindows_SbCommand_Number( sbCmd_Number_Session *ses ) {
 			0
 		);
 
-		SBWindows.setOut( lArrow, SbNumCmdEvents.prevPage );
-		SBWindows.setOut( rArrow, SbNumCmdEvents.nextPage );
+		SBWindows.setSignalFn( lArrow, SbNumCmdEvents.prevPage );
+		SBWindows.setSignalFn( rArrow, SbNumCmdEvents.nextPage );
 
 		SBWindows.appendReference( lArrow, ses->sessionParent );
 		SBWindows.appendReference( rArrow, ses->sessionParent );
@@ -766,8 +766,8 @@ void sbCmd_Download( sbWnd *viewer, sbWnd *logger, wchar_t *text ) {
 			SBWindows.appendReference( close, jmp );
 			SBWindows.appendReference( inputBox, jmp ); // ref 0
 			SBWindows.appendReference( inputBox, invalid ); // ref 1
-			SBWindows.setOut( inputBox, Commands.Download.StorePath );
-			SBWindows.setOut( close, Commands.Download.Close );
+			SBWindows.setSignalFn( inputBox, Commands.Download.StorePath );
+			SBWindows.setSignalFn( close, Commands.Download.Close );
 			SBWindows.focus( inputBox );
 
 			msgloop( ); // longjmp() is called in Commands.Download.StorePath, the stack then unwinds back to the setjmp().
@@ -1227,11 +1227,11 @@ void CreateStaticWindows_SbCommand_Download_Ses( sbCmd_Download_Session *ses ) {
 	SBWindows.appendReference( closeButton, parent );
 	SBWindows.appendReference( parent, ses );
 
-	SBWindows.setOut( fscreenButton, SbDldCmdEvents.fullscreen );
-	SBWindows.setOut( lArrow, SbDldCmdEvents.prevNum );
-	SBWindows.setOut( rArrow, SbDldCmdEvents.nextNum );
-	SBWindows.setOut( closeButton, SbDldCmdEvents.close );
-	SBWindows.setIn( parent, dldCmdProc );
+	SBWindows.setSignalFn( fscreenButton, SbDldCmdEvents.fullscreen );
+	SBWindows.setSignalFn( lArrow, SbDldCmdEvents.prevNum );
+	SBWindows.setSignalFn( rArrow, SbDldCmdEvents.nextNum );
+	SBWindows.setSignalFn( closeButton, SbDldCmdEvents.close );
+	SBWindows.setSignalFn( parent, dldCmdProc );
 }
 
 void CreateDynamicWindows_SbCommand_Download_Ses( sbCmd_Download_Session *ses ) {
@@ -1525,7 +1525,7 @@ void sbCmd_Chconf( sbWnd *viewer, sbWnd *logger, wchar_t *text ) {
 		SBWindows.appendReference( confirm, jmp );
 		SBWindows.appendReference( confirm, pdldTbox );
 		SBWindows.appendReference( confirm, pdldEmsg );
-		SBWindows.setOut( confirm, Commands.Chconf.Confirm );
+		SBWindows.setSignalFn( confirm, Commands.Chconf.Confirm );
 
 		msgloop( );
 	} else {
