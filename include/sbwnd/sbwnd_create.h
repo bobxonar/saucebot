@@ -72,6 +72,7 @@ sbWnd *CommonInfoCreator( HWND, const wString, uint8_t, sbWnd_Dims * );
 #define SB_DIMTYPE_FFFI_BR		(0x3E)
 #define SB_DIMTYPE_FFFF_BR		(0x3F)
 
+void sbWndEvaluateDims( HWND, uint8_t, sbWnd_Dims *, dimension[4] );
 
 HWND BasicWindowHWNDCreator( HWND, const wString, uint8_t, sbWnd_Dims * );
 HWND TextboxHWNDCreator( HWND, const wString, uint8_t, sbWnd_Dims * );

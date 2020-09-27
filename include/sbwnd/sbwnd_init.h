@@ -36,6 +36,10 @@ typedef struct {
 	ULONG_PTR gdipToken;
 	// Tells whether windows are created hidden or shown. 1 for showing(default), 0 for hiding.
 	uint8_t createMode;
+	// Screen x dimension and y dimension
+	int
+		scrWidth,
+		scrHeight;
 } SbGUIMasterStruct;
 
 extern SbGUIMasterStruct SbGUIMaster;

@@ -177,12 +177,12 @@ void sbCmd_Number( sbWnd *viewer, sbWnd *logger, wchar_t *text ) {
 	);
 
 	// Close button
-	dims.floatDims[0] = 1.0f;
+	dims.intDims[0] = 0;
 
 	sbWnd *closeButton = SBStringWindows.create(
 		GetHWND( viewMaster ),
 		L"close button",
-		SB_DIMTYPE_FIII_TR,
+		SB_DIMTYPE_IIII_TR,
 		&dims,
 		L"Close",
 		15,
@@ -458,14 +458,14 @@ void CreateWindows_SbCommand_Number( sbCmd_Number_Session *ses ) {
 
 		// Left Arrow
 		dims.floatDims[0] = SB_CENTER_DIM( 0.4f );
-		dims.floatDims[1] = 1.0f;
+		dims.intDims[1] = 0;
 		dims.intDims[2] = 0;
 		dims.intDims[3] = 0;
 
 		sbWnd *lArrow = SBStringWindows.create(
 			GetHWND( ses->sessionParent ),
 			L"name",
-			SB_DIMTYPE_FFII_BL,
+			SB_DIMTYPE_FIII_BL,
 			&dims,
 			L"<",
 			15,
@@ -478,7 +478,7 @@ void CreateWindows_SbCommand_Number( sbCmd_Number_Session *ses ) {
 		sbWnd *rArrow = SBStringWindows.create(
 			GetHWND( ses->sessionParent ),
 			L"name",
-			SB_DIMTYPE_FFII_BL,
+			SB_DIMTYPE_FIII_BL,
 			&dims,
 			L">",
 			15,
@@ -491,20 +491,19 @@ void CreateWindows_SbCommand_Number( sbCmd_Number_Session *ses ) {
 		sbWnd *pages = SBStringWindows.create(
 			GetHWND( ses->sessionParent ),
 			L"page counter",
-			SB_DIMTYPE_FFII_BL,
+			SB_DIMTYPE_FIII_BL,
 			&dims,
 			L"0 of 0",
 			15,
 			0
 		);
 
-		dims.floatDims[0] = 1.0f;
-		dims.floatDims[1] = 1.0f;
+		dims.intDims[0] = 0;
 
 		sbWnd *status = SBStringWindows.create(
 			GetHWND( ses->sessionParent ),
 			L"status bar",
-			SB_DIMTYPE_FFII_BR,
+			SB_DIMTYPE_IIII_BR,
 			&dims,
 			L"Downloaded: 0/0",
 			15,
@@ -751,12 +750,12 @@ void sbCmd_Download( sbWnd *viewer, sbWnd *logger, wchar_t *text ) {
 			);
 			SBWindows.setCreateMode( SBWND_CREATEMODE_SHOW );
 
-			dims.floatDims[0] = 1.0f;
+			dims.intDims[0] = 0;
 			dims.intDims[1] = 0;
 			close = SBStringWindows.create(
 				GetHWND( viewer ),
 				L"close",
-				SB_DIMTYPE_FIII_TR,
+				SB_DIMTYPE_IIII_TR,
 				&dims,
 				L"Close",
 				15,
@@ -1209,11 +1208,11 @@ void CreateStaticWindows_SbCommand_Download_Ses( sbCmd_Download_Session *ses ) {
 	);
 
 	// close button
-	dims.floatDims[0] = 1.0f;
+	dims.intDims[0] = 0;
 	closeButton = SBStringWindows.create(
 		GetHWND( parent ),
 		L"close-button",
-		SB_DIMTYPE_FIII_TR,
+		SB_DIMTYPE_IIII_TR,
 		&dims,
 		L"Close",
 		15,
@@ -1280,11 +1279,10 @@ void CreateDynamicWindows_SbCommand_Download_Ses( sbCmd_Download_Session *ses ) 
 		);
 
 		// Info box
-		dims.floatDims[0] = 1.0f;
 		infoBox = SBBasicTextWindows.create(
 			GetHWND( top ),
 			L"infoBox",
-			SB_DIMTYPE_FFFF_TR,
+			SB_DIMTYPE_IFFF_TR,
 			&dims,
 			15
 		);
@@ -1338,7 +1336,7 @@ void CreateDynamicWindows_SbCommand_Download_Ses( sbCmd_Download_Session *ses ) 
 
 		// Progress message
 		dims.floatDims[0] = SB_CENTER_DIM( 0.5f );
-		dims.floatDims[1] = 1.0f;
+		dims.intDims[1] = 0;
 		dims.intDims[2] = 0;
 		dims.intDims[3] = 0;
 
@@ -1348,7 +1346,7 @@ void CreateDynamicWindows_SbCommand_Download_Ses( sbCmd_Download_Session *ses ) 
 		progMsg = SBStringWindows.create(
 			GetHWND( top ),
 			L"progMsg",
-			SB_DIMTYPE_FFII_BL,
+			SB_DIMTYPE_FIII_BL,
 			&dims,
 			progmsg,
 			15,
@@ -1476,13 +1474,13 @@ void sbCmd_Chconf( sbWnd *viewer, sbWnd *logger, wchar_t *text ) {
 		);
 
 		// Permanant download path textbox
-		dims.floatDims[0] = 1.0f;
+		dims.intDims[0] = 0;
 		dims.floatDims[2] = 0.7f;
 		dims.intDims[3] = 19;
 		pdldTbox = SBTextboxes.create(
 			GetHWND( viewer ),
 			L"pdldTbox",
-			SB_DIMTYPE_FIFI_TR,
+			SB_DIMTYPE_IIFI_TR,
 			&dims,
 			1
 		);
@@ -1509,12 +1507,12 @@ void sbCmd_Chconf( sbWnd *viewer, sbWnd *logger, wchar_t *text ) {
 		SBWindows.setCreateMode( SBWND_CREATEMODE_SHOW );
 
 		// Confirm button
-		dims.floatDims[0] = 1.0f;
-		dims.floatDims[1] = 1.0f;
+		dims.intDims[0] = 0;
+		dims.intDims[1] = 0;
 		confirm = SBStringWindows.create(
 			GetHWND( viewer ),
 			L"confirm",
-			SB_DIMTYPE_FFII_BR,
+			SB_DIMTYPE_IIII_BR,
 			&dims,
 			L"Confirm",
 			15,

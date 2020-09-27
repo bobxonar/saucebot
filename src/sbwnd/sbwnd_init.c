@@ -88,6 +88,8 @@ void SetUpSbGUIMaster( void ) {
 	SbGUIMaster.sbAccelTable = LoadAccelerators( GetModuleHandleW( NULL ), MAKEINTRESOURCE( TBL_ONE ) );
 	SbGUIMaster.TopLevelWindows = Lists.New( );
 	SbGUIMaster.masterWnd = NULL;
+	SbGUIMaster.scrWidth = GetSystemMetrics( SM_CXSCREEN );
+	SbGUIMaster.scrHeight = GetSystemMetrics( SM_CYSCREEN );
 }
 
 void RegisterClasses( void ) {

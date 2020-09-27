@@ -271,10 +271,10 @@ LRESULT CALLBACK TextWndProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam 
 		}
 
 		case WM_PAINT: {
-			PAINTSTRUCT ps = { 0 };
-			HDC dc = BeginPaint( hwnd, &ps );
 			
 			// Rendering text. Now featuring wrapping!
+			PAINTSTRUCT ps = { 0 };
+			HDC dc = BeginPaint( hwnd, &ps );
 
 			sbWnd *wnd = Maps.Search( SbGUIMaster.WindowMap, hwnd );
 			SBBasicTextWindowInfo *info = GetSpecificHandle( wnd );
@@ -840,42 +840,10 @@ void DoubleWStringCapacity( SBTextboxInfo *info ) {
 BOOL CALLBACK ChildSizingProc( IN HWND hwnd, IN LPARAM lParam ) {
 
 	sbWnd *wnd = Maps.Search( SbGUIMaster.WindowMap, hwnd );
-	RECT r = { 0 };
 	dimension finDims[4] = { 0 };
 	HWND parent = GetParent( hwnd );
 
-	int w = 0, h = 0;
-	if ( wnd->dimType & 0xF ) {
-		GetClientRect( parent, &r );
-		w = r.right - r.left;
-		h = r.bottom - r.top;
-	}
-
-	sbWnd_Dims *dims = wnd->dims;
-	for ( int i = 0; i < 4; ++i ) {
-		if ( wnd->dimType & ( 0x8 >> i ) )
-			finDims[i] = dims->floatDims[i] * ( i % 2 == 0 ? w : h );
-		else
-			finDims[i] = dims->intDims[i];
-	}
-
-	if ( finDims[0] < 0 && finDims[0] != CW_USEDEFAULT ) {
-		if ( wnd->dimType & 0x10 )
-			finDims[0] = ( -finDims[0] ) + ( finDims[2] / 2 );
-		else
-			finDims[0] = ( -finDims[0] ) - ( finDims[2] / 2 );
-	}
-	if ( finDims[1] < 0 && finDims[0] != CW_USEDEFAULT ) {
-		if ( wnd->dimType & 0x20 )
-			finDims[1] = ( -finDims[1] ) + ( finDims[3] / 2 );
-		else
-			finDims[1] = ( -finDims[1] ) - ( finDims[3] / 2 );
-	}
-
-	if ( wnd->dimType & 0x10 )
-		finDims[0] -= finDims[2];
-	if ( wnd->dimType & 0x20 )
-		finDims[1] -= finDims[3];
+	sbWndEvaluateDims( parent, wnd->dimType, wnd->dims, finDims );
 
 	MoveWindow( hwnd, finDims[0], finDims[1], finDims[2], finDims[3], TRUE );
 	SendMessage( hwnd, SBM_SIZE, 0, 0 );

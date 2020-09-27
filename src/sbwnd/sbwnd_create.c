@@ -23,49 +23,80 @@ sbWnd *CommonInfoCreator( HWND parent, const wString name, uint8_t dimType, sbWn
 	return fin;
 }
 
+void sbWndEvaluateDims( HWND parent, uint8_t dimType, sbWnd_Dims *dims, dimension evalDims[4] ) {
+	RECT parentRect = { 0 };
+	int
+		w = 0,
+		h = 0;
 
-HWND BasicWindowHWNDCreator( HWND parent, const wString name, uint8_t dimType, sbWnd_Dims *dims ) {
-	RECT r = { 0 };
-	int w = 0, h = 0;
-	DWORD style = WS_OVERLAPPEDWINDOW;
+	/* 
+	dimension
+		parentDims[4] = { 0 },
+		siblingDims[4] = { 0 };
 
-	dimension finDims[4] = { 0 };
-	if ( dimType & 0xF && parent == NULL ) return NULL;
+	*/
 
-	// using scaling coefficients requires a parent window to exist.
-	if ( dimType & 0xF ) {
-		GetClientRect( parent, &r );
-		w = r.right - r.left;
-		h = r.bottom - r.top;
-		style = WS_CHILD | WS_BORDER;
+	// Evaluate parent dimensions--this will eventually become recursive as
+	// dimension evaluation is a dynamic process as windows resize.
+	if ( dimType & 0xF && parent == NULL ) {
+	
+		w = SbGUIMaster.scrWidth;
+		h = SbGUIMaster.scrHeight;
+
+	} else if ( parent != NULL ) {
+
+		GetClientRect( parent, &parentRect );
+		w = parentRect.right - parentRect.left;
+		h = parentRect.bottom - parentRect.top;
+
 	}
 
-	// Turn floats into ints using parent window dimensions.
+	// Sibling evaluation goes here in the future.
+
+	// Initial evaluation of dimensions--basic float to int conversion
+	// on the lowest 4 bits of the dimension type.
+	// This assumes top left cornering at first.
 	for ( int i = 0; i < 4; ++i ) {
 		if ( dimType & ( 0x8 >> i ) )
-			finDims[i] = dims->floatDims[i] * ( i % 2 == 0 ? w : h );
+			evalDims[i] = dims->floatDims[i] * ( i % 2 == 0 ? w : h );
 		else
-			finDims[i] = dims->intDims[i];
+			evalDims[i] = dims->intDims[i];
 	}
 
-	// Evaluate centered dimensions.
-	if ( finDims[0] < 0 && finDims[0] != CW_USEDEFAULT ) {
-		if ( dimType & 0x10 )
-			finDims[0] = ( -finDims[0] ) + ( finDims[2] / 2 );
-		else
-			finDims[0] = ( -finDims[0] ) - ( finDims[2] / 2 );
-	}
-	if ( finDims[1] < 0 && finDims[0] != CW_USEDEFAULT ) {
-		if ( dimType & 0x20 )
-			finDims[1] = ( -finDims[1] ) + ( finDims[3] / 2 );
-		else
-			finDims[1] = ( -finDims[1] ) - ( finDims[3] / 2 );
-	}
+	dimension
+		cornerX = evalDims[0],
+		cornerY = evalDims[1];
 
+	// Evaluate centering to top left for now.
+	if ( cornerX < 0 && cornerX != CW_USEDEFAULT )
+		cornerX = ( -cornerX ) - ( evalDims[2] / 2 );
+
+	if ( cornerY < 0 && cornerY != CW_USEDEFAULT )
+		cornerY = ( -cornerY ) - ( evalDims[3] / 2 );
+
+	
+	// Evaluate transformed corners. Uses the correct transformations
+	// this time.
 	if ( dimType & 0x10 )
-		finDims[0] -= finDims[2];
+		cornerX = ( w - cornerX ) - evalDims[2];
+	
 	if ( dimType & 0x20 )
-		finDims[1] -= finDims[3];
+		cornerY = ( h - cornerY ) - evalDims[3];
+
+
+	evalDims[0] = cornerX;
+	evalDims[1] = cornerY;
+	return;
+}
+
+HWND BasicWindowHWNDCreator( HWND parent, const wString name, uint8_t dimType, sbWnd_Dims *dims ) {
+
+	DWORD style = WS_OVERLAPPEDWINDOW;
+	if ( parent != NULL )
+		style = WS_CHILD | WS_BORDER;
+
+	dimension finDims[4] = { 0 };
+	sbWndEvaluateDims( parent, dimType, dims, finDims );
 
 	return CreateWindowExW(
 		0,
@@ -84,40 +115,8 @@ HWND TextboxHWNDCreator( HWND parent, const wString name, uint8_t dimType, sbWnd
 	// Textboxes MUST have a parent window.
 	if ( parent == NULL ) return NULL;
 	
-	RECT r = { 0 };
-	int w = 0, h = 0;
 	dimension finDims[4] = { 0 };
-	
-	if ( dimType & 0xF ) {
-		GetClientRect( parent, &r );
-		w = r.right - r.left;
-		h = r.bottom - r.top;
-	}
-
-	for ( int i = 0; i < 4; ++i ) {
-		if ( dimType & ( 0x8 >> i ) )
-			finDims[i] = dims->floatDims[i] * ( i % 2 == 0 ? w : h );
-		else
-			finDims[i] = dims->intDims[i];
-	}
-
-	if ( finDims[0] < 0 && finDims[0] != CW_USEDEFAULT ) {
-		if ( dimType & 0x10 )
-			finDims[0] = ( -finDims[0] ) + ( finDims[2] / 2 );
-		else
-			finDims[0] = ( -finDims[0] ) - ( finDims[2] / 2 );
-	}
-	if ( finDims[1] < 0 && finDims[0] != CW_USEDEFAULT ) {
-		if ( dimType & 0x20 )
-			finDims[1] = ( -finDims[1] ) + ( finDims[3] / 2 );
-		else
-			finDims[1] = ( -finDims[1] ) - ( finDims[3] / 2 );
-	}
-
-	if ( dimType & 0x10 )
-		finDims[0] -= finDims[2];
-	if ( dimType & 0x20 )
-		finDims[1] -= finDims[3];
+	sbWndEvaluateDims( parent, dimType, dims, finDims );
 	
 	return CreateWindowExW(
 		0,
@@ -133,46 +132,14 @@ HWND TextboxHWNDCreator( HWND parent, const wString name, uint8_t dimType, sbWnd
 }
 
 HWND BasicTextWindowHWNDCreator( HWND parent, const wString name, uint8_t dimType, sbWnd_Dims *dims ) {
-	RECT r = { 0 };
-	int w = 0, h = 0;
+
 	DWORD style = WS_OVERLAPPEDWINDOW;
+	if ( parent != NULL )
+		style = WS_CHILD | WS_BORDER;
 
 	dimension finDims[4] = { 0 };
-	if ( dimType & 0xF && parent == NULL ) return NULL;
-
-	// using scaling coefficients requires a parent window to exist.
-	if ( dimType & 0xF ) {
-		GetClientRect( parent, &r );
-		w = r.right - r.left;
-		h = r.bottom - r.top;
-		style = WS_CHILD | WS_BORDER;
-	}
-
-	for ( int i = 0; i < 4; ++i ) {
-		if ( dimType & ( 0x8 >> i ) )
-			finDims[i] = dims->floatDims[i] * ( i % 2 == 0 ? w : h );
-		else
-			finDims[i] = dims->intDims[i];
-	}
-
-	if ( finDims[0] < 0 && finDims[0] != CW_USEDEFAULT ) {
-		if ( dimType & 0x10 )
-			finDims[0] = ( -finDims[0] ) + ( finDims[2] / 2 );
-		else
-			finDims[0] = ( -finDims[0] ) - ( finDims[2] / 2 );
-	}
-	if ( finDims[1] < 0 && finDims[0] != CW_USEDEFAULT ) {
-		if ( dimType & 0x20 )
-			finDims[1] = ( -finDims[1] ) + ( finDims[3] / 2 );
-		else
-			finDims[1] = ( -finDims[1] ) - ( finDims[3] / 2 );
-	}
-
-	if ( dimType & 0x10 )
-		finDims[0] -= finDims[2];
-	if ( dimType & 0x20 )
-		finDims[1] -= finDims[3];
-
+	sbWndEvaluateDims( parent, dimType, dims, finDims );
+	
 	return CreateWindowExW(
 		0,
 		SbGUIMaster.WindowClassNameArray[ TEXT_WINDOW ],
@@ -190,42 +157,10 @@ HWND BasicTextWindowHWNDCreator( HWND parent, const wString name, uint8_t dimTyp
 HWND ClickableWindowHWNDCreator( HWND parent, const wString name, uint8_t dimType, sbWnd_Dims *dims ) {
 	// Clickable windows MUST have a parent window.
 	if ( parent == NULL ) return NULL;
-	
-	RECT r = { 0 };
-	int w = 0, h = 0;
+
 	dimension finDims[4] = { 0 };
+	sbWndEvaluateDims( parent, dimType, dims, finDims );
 	
-	if ( dimType & 0xF ) {
-		GetClientRect( parent, &r );
-		w = r.right - r.left;
-		h = r.bottom - r.top;
-	}
-
-	for ( int i = 0; i < 4; ++i ) {
-		if ( dimType & ( 0x8 >> i ) )
-			finDims[i] = dims->floatDims[i] * ( i % 2 == 0 ? w : h );
-		else
-			finDims[i] = dims->intDims[i];
-	}
-
-	if ( finDims[0] < 0 && finDims[0] != CW_USEDEFAULT ) {
-		if ( dimType & 0x10 )
-			finDims[0] = ( -finDims[0] ) + ( finDims[2] / 2 );
-		else
-			finDims[0] = ( -finDims[0] ) - ( finDims[2] / 2 );
-	}
-	if ( finDims[1] < 0 && finDims[0] != CW_USEDEFAULT ) {
-		if ( dimType & 0x20 )
-			finDims[1] = ( -finDims[1] ) + ( finDims[3] / 2 );
-		else
-			finDims[1] = ( -finDims[1] ) - ( finDims[3] / 2 );
-	}
-
-	if ( dimType & 0x10 )
-		finDims[0] -= finDims[2];
-	if ( dimType & 0x20 )
-		finDims[1] -= finDims[3];
-
 	return CreateWindowExW(
 		0,
 		SbGUIMaster.WindowClassNameArray[ CLICKABLE_WINDOW ],
@@ -240,45 +175,13 @@ HWND ClickableWindowHWNDCreator( HWND parent, const wString name, uint8_t dimTyp
 }
 
 HWND RestrictedImageWindowHWNDCreator( HWND parent, const wString name, uint8_t dimType, sbWnd_Dims *dims ) {
-	RECT r = { 0 };
-	int w = 0, h = 0;
+	
 	DWORD style = WS_OVERLAPPEDWINDOW;
+	if ( parent != NULL )
+		style = WS_CHILD;
 
 	dimension finDims[4] = { 0 };
-	if ( dimType & 0xF && parent == NULL ) return NULL;
-
-	// using scaling coefficients requires a parent window to exist.
-	if ( dimType & 0xF ) {
-		GetClientRect( parent, &r );
-		w = r.right - r.left;
-		h = r.bottom - r.top;
-		style = WS_CHILD;
-	}
-
-	for ( int i = 0; i < 4; ++i ) {
-		if ( dimType & ( 0x8 >> i ) )
-			finDims[i] = dims->floatDims[i] * ( i % 2 == 0 ? w : h );
-		else
-			finDims[i] = dims->intDims[i];
-	}
-
-	if ( finDims[0] < 0 && finDims[0] != CW_USEDEFAULT ) {
-		if ( dimType & 0x10 )
-			finDims[0] = ( -finDims[0] ) + ( finDims[2] / 2 );
-		else
-			finDims[0] = ( -finDims[0] ) - ( finDims[2] / 2 );
-	}
-	if ( finDims[1] < 0 && finDims[0] != CW_USEDEFAULT ) {
-		if ( dimType & 0x20 )
-			finDims[1] = ( -finDims[1] ) + ( finDims[3] / 2 );
-		else
-			finDims[1] = ( -finDims[1] ) - ( finDims[3] / 2 );
-	}
-
-	if ( dimType & 0x10 )
-		finDims[0] -= finDims[2];
-	if ( dimType & 0x20 )
-		finDims[1] -= finDims[3];
+	sbWndEvaluateDims( parent, dimType, dims, finDims );
 
 	return CreateWindowExW(
 		0,
@@ -294,51 +197,17 @@ HWND RestrictedImageWindowHWNDCreator( HWND parent, const wString name, uint8_t 
 }
 
 HWND MasterWindowHWNDCreator( HWND parent, const wString name, uint8_t dimType, sbWnd_Dims *dims ) {
-	RECT r = { 0 };
-	int w = 0, h = 0;
-	DWORD style = WS_OVERLAPPEDWINDOW;
+	if ( parent != NULL )
+		return NULL; // Master windows are not allowed to have a parent.
 
 	dimension finDims[4] = { 0 };
-	if ( dimType & 0xF && parent == NULL ) return NULL;
-
-	// using scaling coefficients requires a parent window to exist.
-	if ( dimType & 0xF ) {
-		GetClientRect( parent, &r );
-		w = r.right - r.left;
-		h = r.bottom - r.top;
-		style = WS_CHILD | WS_BORDER;
-	}
-
-	for ( int i = 0; i < 4; ++i ) {
-		if ( dimType & ( 0x8 >> i ) )
-			finDims[i] = dims->floatDims[i] * ( i % 2 == 0 ? w : h );
-		else
-			finDims[i] = dims->intDims[i];
-	}
-
-	if ( finDims[0] < 0 && finDims[0] != CW_USEDEFAULT ) {
-		if ( dimType & 0x10 )
-			finDims[0] = ( -finDims[0] ) + ( finDims[2] / 2 );
-		else
-			finDims[0] = ( -finDims[0] ) - ( finDims[2] / 2 );
-	}
-	if ( finDims[1] < 0 && finDims[0] != CW_USEDEFAULT ) {
-		if ( dimType & 0x20 )
-			finDims[1] = ( -finDims[1] ) + ( finDims[3] / 2 );
-		else
-			finDims[1] = ( -finDims[1] ) - ( finDims[3] / 2 );
-	}
-
-	if ( dimType & 0x10 )
-		finDims[0] -= finDims[2];
-	if ( dimType & 0x20 )
-		finDims[1] -= finDims[3];
-
+	sbWndEvaluateDims( parent, dimType, dims, finDims );
+	
 	return CreateWindowExW(
 		WS_EX_COMPOSITED,
 		SbGUIMaster.WindowClassNameArray[ MASTER_WINDOW ],
 		name,
-		style,
+		WS_OVERLAPPEDWINDOW,
 		finDims[0], finDims[1], finDims[2], finDims[3],
 		parent,
 		NULL,
@@ -348,46 +217,14 @@ HWND MasterWindowHWNDCreator( HWND parent, const wString name, uint8_t dimType, 
 }
 
 HWND ViewcmdMasterWindowHWNDCreator( HWND parent, const wString name, uint8_t dimType, sbWnd_Dims *dims ) {
-	RECT r = { 0 };
-	int w = 0, h = 0;
+
 	DWORD style = WS_OVERLAPPEDWINDOW;
+	if ( parent != NULL )
+		style = WS_CHILD;
 
 	dimension finDims[4] = { 0 };
-	if ( dimType & 0xF && parent == NULL ) return NULL;
-
-	// using scaling coefficients requires a parent window to exist.
-	if ( dimType & 0xF ) {
-		GetClientRect( parent, &r );
-		w = r.right - r.left;
-		h = r.bottom - r.top;
-		style = WS_CHILD;
-	}
-
-	for ( int i = 0; i < 4; ++i ) {
-		if ( dimType & ( 0x8 >> i ) )
-			finDims[i] = dims->floatDims[i] * ( i % 2 == 0 ? w : h );
-		else
-			finDims[i] = dims->intDims[i];
-	}
-
-	if ( finDims[0] < 0 && finDims[0] != CW_USEDEFAULT ) {
-		if ( dimType & 0x10 )
-			finDims[0] = ( -finDims[0] ) + ( finDims[2] / 2 );
-		else
-			finDims[0] = ( -finDims[0] ) - ( finDims[2] / 2 );
-	}
-	if ( finDims[1] < 0 && finDims[0] != CW_USEDEFAULT ) {
-		if ( dimType & 0x20 )
-			finDims[1] = ( -finDims[1] ) + ( finDims[3] / 2 );
-		else
-			finDims[1] = ( -finDims[1] ) - ( finDims[3] / 2 );
-	}
-
-	if ( dimType & 0x10 )
-		finDims[0] -= finDims[2];
-	if ( dimType & 0x20 )
-		finDims[1] -= finDims[3];
-
+	sbWndEvaluateDims( parent, dimType, dims, finDims );
+	
 	return CreateWindowExW(
 		WS_EX_TOPMOST,
 		SbGUIMaster.WindowClassNameArray[ VIEWCMD_MASTER_WINDOW ],
@@ -402,48 +239,14 @@ HWND ViewcmdMasterWindowHWNDCreator( HWND parent, const wString name, uint8_t di
 }
 
 HWND StringWindowHWNDCreator( HWND parent, const wString name, uint8_t dimType, sbWnd_Dims *dims ) {
-	RECT r = { 0 };
-	int w = 0, h = 0;
+
 	DWORD style = WS_OVERLAPPEDWINDOW;
+	if ( parent != NULL )
+		style = WS_CHILD;
 
 	dimension finDims[4] = { 0 };
-	if ( dimType & 0xF && parent == NULL ) return NULL;
-
+	sbWndEvaluateDims( parent, dimType, dims, finDims );
 	
-
-	// using scaling coefficients requires a parent window to exist.
-	if ( dimType & 0xF ) {
-		GetClientRect( parent, &r );
-		w = r.right - r.left;
-		h = r.bottom - r.top;
-		style = WS_CHILD;
-	}
-
-	for ( int i = 0; i < 4; ++i ) {
-		if ( dimType & ( 0x8 >> i ) )
-			finDims[i] = dims->floatDims[i] * ( i % 2 == 0 ? w : h );
-		else
-			finDims[i] = dims->intDims[i];
-	}
-
-	if ( finDims[0] < 0 && finDims[0] != CW_USEDEFAULT ) {
-		if ( dimType & 0x10 )
-			finDims[0] = ( -finDims[0] ) + ( finDims[2] / 2 );
-		else
-			finDims[0] = ( -finDims[0] ) - ( finDims[2] / 2 );
-	}
-	if ( finDims[1] < 0 && finDims[0] != CW_USEDEFAULT ) {
-		if ( dimType & 0x20 )
-			finDims[1] = ( -finDims[1] ) + ( finDims[3] / 2 );
-		else
-			finDims[1] = ( -finDims[1] ) - ( finDims[3] / 2 );
-	}
-
-	if ( dimType & 0x10 )
-		finDims[0] -= finDims[2];
-	if ( dimType & 0x20 )
-		finDims[1] -= finDims[3];
-
 	return CreateWindowExW(
 		0,
 		SbGUIMaster.WindowClassNameArray[ STRING_WINDOW ],
@@ -461,40 +264,8 @@ HWND ProgressBarWindowHWNDCreator( HWND parent, const wString name, uint8_t dimT
 	// Progress bars MUST have a parent window.
 	if ( parent == NULL ) return NULL;
 	
-	RECT r = { 0 };
-	int w = 0, h = 0;
 	dimension finDims[4] = { 0 };
-	
-	if ( dimType & 0xF ) {
-		GetClientRect( parent, &r );
-		w = r.right - r.left;
-		h = r.bottom - r.top;
-	}
-
-	for ( int i = 0; i < 4; ++i ) {
-		if ( dimType & ( 0x8 >> i ) )
-			finDims[i] = dims->floatDims[i] * ( i % 2 == 0 ? w : h );
-		else
-			finDims[i] = dims->intDims[i];
-	}
-
-	if ( finDims[0] < 0 && finDims[0] != CW_USEDEFAULT ) {
-		if ( dimType & 0x10 )
-			finDims[0] = ( -finDims[0] ) + ( finDims[2] / 2 );
-		else
-			finDims[0] = ( -finDims[0] ) - ( finDims[2] / 2 );
-	}
-	if ( finDims[1] < 0 && finDims[0] != CW_USEDEFAULT ) {
-		if ( dimType & 0x20 )
-			finDims[1] = ( -finDims[1] ) + ( finDims[3] / 2 );
-		else
-			finDims[1] = ( -finDims[1] ) - ( finDims[3] / 2 );
-	}
-
-	if ( dimType & 0x10 )
-		finDims[0] -= finDims[2];
-	if ( dimType & 0x20 )
-		finDims[1] -= finDims[3];
+	sbWndEvaluateDims( parent, dimType, dims, finDims );
 	
 	return CreateWindowExW(
 		0,
@@ -510,48 +281,16 @@ HWND ProgressBarWindowHWNDCreator( HWND parent, const wString name, uint8_t dimT
 }
 
 HWND DldcmdMasterWindowHWNDCreator( HWND parent, const wString name, uint8_t dimType, sbWnd_Dims *dims ) {
-	RECT r = { 0 };
-	int w = 0, h = 0;
+
 	DWORD style = WS_OVERLAPPEDWINDOW;
+	if ( parent != NULL )
+		style = WS_CHILD;
 
 	dimension finDims[4] = { 0 };
-	if ( dimType & 0xF && parent == NULL ) return NULL;
-
-	// using scaling coefficients requires a parent window to exist.
-	if ( dimType & 0xF ) {
-		GetClientRect( parent, &r );
-		w = r.right - r.left;
-		h = r.bottom - r.top;
-		style = WS_CHILD;
-	}
-
-	for ( int i = 0; i < 4; ++i ) {
-		if ( dimType & ( 0x8 >> i ) )
-			finDims[i] = dims->floatDims[i] * ( i % 2 == 0 ? w : h );
-		else
-			finDims[i] = dims->intDims[i];
-	}
-
-	if ( finDims[0] < 0 && finDims[0] != CW_USEDEFAULT ) {
-		if ( dimType & 0x10 )
-			finDims[0] = ( -finDims[0] ) + ( finDims[2] / 2 );
-		else
-			finDims[0] = ( -finDims[0] ) - ( finDims[2] / 2 );
-	}
-	if ( finDims[1] < 0 && finDims[0] != CW_USEDEFAULT ) {
-		if ( dimType & 0x20 )
-			finDims[1] = ( -finDims[1] ) + ( finDims[3] / 2 );
-		else
-			finDims[1] = ( -finDims[1] ) - ( finDims[3] / 2 );
-	}
-
-	if ( dimType & 0x10 )
-		finDims[0] -= finDims[2];
-	if ( dimType & 0x20 )
-		finDims[1] -= finDims[3];
-
+	sbWndEvaluateDims( parent, dimType, dims, finDims );
+	
 	return CreateWindowExW(
-		WS_EX_TOPMOST,
+		0,
 		SbGUIMaster.WindowClassNameArray[ VIEWCMD_MASTER_WINDOW ],
 		name,
 		style,
@@ -566,6 +305,10 @@ HWND DldcmdMasterWindowHWNDCreator( HWND parent, const wString name, uint8_t dim
 sbWnd *BasicWindowCreator( HWND parent, const wString name, uint8_t dimType, sbWnd_Dims *dims ) {
 	sbWnd *fin = CommonInfoCreator( parent, name, dimType, dims );
 	fin->hwnd = BasicWindowHWNDCreator( parent, name, dimType, dims );
+	
+	if ( fin->hwnd == NULL )
+		return NULL;
+
 	fin->type = BASIC_WINDOW;
 	Maps.Insert( SbGUIMaster.WindowMap, fin->hwnd, fin );
 	if ( SbGUIMaster.createMode )
@@ -576,6 +319,10 @@ sbWnd *BasicWindowCreator( HWND parent, const wString name, uint8_t dimType, sbW
 sbWnd *TextboxCreator( HWND parent, const wString name, uint8_t dimType, sbWnd_Dims *dims, int enterAction ) {
 	sbWnd *fin = CommonInfoCreator( parent, name, dimType, dims );
 	fin->hwnd = TextboxHWNDCreator( parent, name, dimType, dims );
+	
+	if ( fin->hwnd == NULL )
+		return NULL;
+
 	fin->type = TEXTBOX_WINDOW;
 	fin->specific = TextboxInfoCreator( fin->hwnd, enterAction );
 	Maps.Insert( SbGUIMaster.WindowMap, fin->hwnd, fin );
@@ -587,6 +334,10 @@ sbWnd *TextboxCreator( HWND parent, const wString name, uint8_t dimType, sbWnd_D
 sbWnd *BasicTextWindowCreator( HWND parent, const wString name, uint8_t dimType, sbWnd_Dims *dims, uint16_t nLines ) {
 	sbWnd *fin = CommonInfoCreator( parent, name, dimType, dims );
 	fin->hwnd = BasicTextWindowHWNDCreator( parent, name, dimType, dims );
+	
+	if ( fin->hwnd == NULL )
+		return NULL;
+
 	fin->type = TEXT_WINDOW;
 	fin->specific = BasicTextWindowInfoCreator( fin->hwnd, nLines );
 	Maps.Insert( SbGUIMaster.WindowMap, fin->hwnd, fin );
@@ -598,6 +349,10 @@ sbWnd *BasicTextWindowCreator( HWND parent, const wString name, uint8_t dimType,
 sbWnd *ClickableWindowCreator( HWND parent, const wString name, uint8_t dimType, sbWnd_Dims *dims ) {
 	sbWnd *fin = CommonInfoCreator( parent, name, dimType, dims );
 	fin->hwnd = ClickableWindowHWNDCreator( parent, name, dimType, dims );
+	
+	if ( fin->hwnd == NULL )
+		return NULL;
+
 	fin->type = CLICKABLE_WINDOW;
 	fin->specific = ClickableWindowInfoCreator( );
 	Maps.Insert( SbGUIMaster.WindowMap, fin->hwnd, fin );
@@ -609,6 +364,10 @@ sbWnd *ClickableWindowCreator( HWND parent, const wString name, uint8_t dimType,
 sbWnd *RestrictedImageWindowCreator( HWND parent, const wString name, uint8_t dimType, sbWnd_Dims *dims, const wString path ) {
 	sbWnd *fin = CommonInfoCreator( parent, name, dimType, dims );
 	fin->hwnd = RestrictedImageWindowHWNDCreator( parent, name, dimType, dims );
+	
+	if ( fin->hwnd == NULL )
+		return NULL;
+
 	fin->type = RESTRICTED_IMAGE_WINDOW;
 	fin->specific = RestrictedImageWindowInfoCreator( fin->hwnd, path );
 	Maps.Insert( SbGUIMaster.WindowMap, fin->hwnd, fin );
@@ -623,6 +382,10 @@ sbWnd *MasterWindowCreator( HWND parent, const wString name, uint8_t dimType, sb
 
 	sbWnd *fin = CommonInfoCreator( parent, name, dimType, dims );
 	fin->hwnd = MasterWindowHWNDCreator( parent, name, dimType, dims );
+
+	if ( fin->hwnd == NULL )
+		return NULL;
+
 	fin->type = MASTER_WINDOW;
 	Maps.Insert( SbGUIMaster.WindowMap, fin->hwnd, fin );
 	if ( SbGUIMaster.createMode )
@@ -634,6 +397,10 @@ sbWnd *MasterWindowCreator( HWND parent, const wString name, uint8_t dimType, sb
 sbWnd *ViewcmdMasterWindowCreator( HWND parent, const wString name, uint8_t dimType, sbWnd_Dims *dims ) {
 	sbWnd *fin = CommonInfoCreator( parent, name, dimType, dims );
 	fin->hwnd = ViewcmdMasterWindowHWNDCreator( parent, name, dimType, dims );
+	
+	if ( fin->hwnd == NULL )
+		return NULL;
+
 	fin->type = VIEWCMD_MASTER_WINDOW;
 	Maps.Insert( SbGUIMaster.WindowMap, fin->hwnd, fin );
 	if ( SbGUIMaster.createMode ) {
@@ -652,6 +419,10 @@ sbWnd *StringWindowCreator( HWND parent, const wString name, uint8_t dimType, sb
 
 	sbWnd *fin = CommonInfoCreator( parent, name, ( dimType & 0x3C ), &selfSize );
 	fin->hwnd = StringWindowHWNDCreator( parent, name, ( dimType & 0x3C ), &selfSize );
+	
+	if ( fin->hwnd == NULL )
+		return NULL;
+
 	fin->specific = StringWindowInfoCreator( str, fontSize, clickable );
 	fin->type = STRING_WINDOW;
 	Maps.Insert( SbGUIMaster.WindowMap, fin->hwnd, fin );
@@ -665,6 +436,10 @@ sbWnd *StringWindowCreator( HWND parent, const wString name, uint8_t dimType, sb
 sbWnd *DldcmdMasterWindowCreator( HWND parent, const wString name, uint8_t dimType, sbWnd_Dims *dims ) {
 	sbWnd *fin = CommonInfoCreator( parent, name, dimType, dims );
 	fin->hwnd = DldcmdMasterWindowHWNDCreator( parent, name, dimType, dims );
+	
+	if ( fin->hwnd == NULL )
+		return NULL;
+
 	fin->type = DLDCMD_MASTER_WINDOW;
 	Maps.Insert( SbGUIMaster.WindowMap, fin->hwnd, fin );
 	if ( SbGUIMaster.createMode ) {
@@ -677,6 +452,10 @@ sbWnd *DldcmdMasterWindowCreator( HWND parent, const wString name, uint8_t dimTy
 sbWnd *ProgressBarWindowCreator( HWND parent, const wString name, uint8_t dimType, sbWnd_Dims *dims, uint16_t total ) {
 	sbWnd *fin = CommonInfoCreator( parent, name, dimType, dims );
 	fin->hwnd = ProgressBarWindowHWNDCreator( parent, name, dimType, dims );
+	
+	if ( fin->hwnd == NULL )
+		return NULL;
+
 	fin->type = PROGRESS_BAR_WINDOW;
 	fin->specific = ProgressBarWindowInfoCreator( total );
 	Maps.Insert( SbGUIMaster.WindowMap, fin->hwnd, fin );

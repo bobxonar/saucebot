@@ -60,7 +60,25 @@ typedef union dimuinion {
 	float floatDims[4];
 } sbWnd_Dims;
 
+/*
+typedef struct sbdimstruct {
+
+	union {
+		int32_t intDims[4];
+		float floatDims[4];
+	} dims;
+
+	uint8_t dimType;
+
+	sbWnd
+		*parent,
+		*sibling;
+
+} sbWnd_Dims;
+*/
+
 typedef wchar_t *	wString;
+typedef wchar_t		wChar;
 
 #define SBWINDOW_TOP	0
 #define SBWINDOW_LEFT	1
@@ -205,6 +223,8 @@ typedef struct {
 
 	struct {
 
+		// Syntax of creators soon to be:
+		// sbWnd *( *create )( const wString name, sbWnd_Dims* dims );
 		sbWnd *( *create )( HWND, const wString, uint8_t, sbWnd_Dims * );
 
 		void ( *destroy )( sbWnd * );

@@ -19,9 +19,6 @@ int WINAPI WinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
 	/*
 	 * The TODOs for saucebot go here
 	 * 
-	 * -> General UI improvements
-	 *     -> Fix basic text window performance - make one DrawTextEx call instead of several per paint message.
-	 * 
 	 * -> Window classes
 	 *     -> The container window--a window made to hold other windows
 	 *     -> Why I never thought of this earlier I have no idea
@@ -36,14 +33,12 @@ int WINAPI WinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
 	 *     -> Drafting the scrolling stuff
 	 *         -> Constant-width
 	 *         -> A circle with 2 arcs above and below (the arcs change distance)
-	 *         -> Need icons for scroll up and scroll down at the top and bottom of window
+	 *         -> The entire scrollbar should be a single window with clickable reigons
 	 * 
 	 * -> The dimensioning system
-	 *     -> Make a seperate dimension evaluator function
 	 *     -> Add sibling-relative positioning
 	 *     -> Make a dimension struct instead of two variables
 	 *     -> Add integer offsets and relative window to this struct
-	 *     -> Corner specifications should evaluate to the cornet of the existing window, not the window to be created.
 	 * 
 	 * -> Download manager (lsdownload command)
 	 *     -> Fairly self-explanatory--can delete, view, whatever
@@ -54,7 +49,7 @@ int WINAPI WinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
 	 * -> 0.4
 	 *     -> Need a name for it
 	 *     -> Should have all the specified improvements/commands above.
-	 *     -> Start telling people about it outsite of 4ch once this version is done.
+	 *     -> Start telling people about it outsite of 4/g/ once this version is done.
 	 *     -> When this is finished, the app should be superior to a browser (mostly).
 	 */
 	
@@ -65,8 +60,12 @@ int WINAPI WinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
 	initGUI( );
 	initSB( );
 	
-	sbWnd_Dims dims = { .intDims = { SB_CENTER_DIM( 960 ), SB_CENTER_DIM( 540 ), 960, 540 } };
-	sbWnd *first = SBMasterWindows.create( NULL, L"Saucebot 0.3 \"エッチ\"" , SB_DIMTYPE_IIII_TL, &dims );
+	sbWnd_Dims dims = { 0 };
+	dims.floatDims[0] = SB_CENTER_DIM( 0.5f );
+	dims.floatDims[1] = SB_CENTER_DIM( 0.5f );
+	dims.floatDims[2] = 0.5f;
+	dims.floatDims[3] = 0.5f;
+	sbWnd *first = SBMasterWindows.create( NULL, L"Saucebot 0.3 \"エッチ\"" , SB_DIMTYPE_FFFF_TL, &dims );
 
 	sbWnd_Dims tBoxDims = { .floatDims = { 0.15f, SB_CENTER_DIM( 0.925f ), 0.55f, 0.0f } };
 	tBoxDims.intDims[3] = 19;
