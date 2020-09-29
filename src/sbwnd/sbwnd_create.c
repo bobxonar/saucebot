@@ -24,7 +24,6 @@ sbWnd *CommonInfoCreator( HWND parent, const wString name, uint8_t dimType, sbWn
 }
 
 void sbWndEvaluateDims( HWND parent, uint8_t dimType, sbWnd_Dims *dims, dimension evalDims[4] ) {
-	RECT parentRect = { 0 };
 	int
 		w = 0,
 		h = 0;
@@ -45,9 +44,10 @@ void sbWndEvaluateDims( HWND parent, uint8_t dimType, sbWnd_Dims *dims, dimensio
 
 	} else if ( parent != NULL ) {
 
-		GetClientRect( parent, &parentRect );
-		w = parentRect.right - parentRect.left;
-		h = parentRect.bottom - parentRect.top;
+		RECT r = { 0 };
+		GetClientRect( parent, &r );
+		w = r.right - r.left;
+		h = r.bottom - r.top;
 
 	}
 
@@ -89,7 +89,7 @@ void sbWndEvaluateDims( HWND parent, uint8_t dimType, sbWnd_Dims *dims, dimensio
 	return;
 }
 
-HWND BasicWindowHWNDCreator( HWND parent, const wString name, uint8_t dimType, sbWnd_Dims *dims ) {
+HWND BasicWindowHWNDCreator( HWND parent, const wString name, uint8_t dimType, sbWnd_Dims *dims, sbWnd *wnd ) {
 
 	DWORD style = WS_OVERLAPPEDWINDOW;
 	if ( parent != NULL )
@@ -107,11 +107,11 @@ HWND BasicWindowHWNDCreator( HWND parent, const wString name, uint8_t dimType, s
 		parent,
 		NULL,
 		GetModuleHandleW( NULL ),
-		NULL
+		wnd
 	);
 }
 
-HWND TextboxHWNDCreator( HWND parent, const wString name, uint8_t dimType, sbWnd_Dims *dims ) {
+HWND TextboxHWNDCreator( HWND parent, const wString name, uint8_t dimType, sbWnd_Dims *dims, sbWnd *wnd ) {
 	// Textboxes MUST have a parent window.
 	if ( parent == NULL ) return NULL;
 	
@@ -127,11 +127,11 @@ HWND TextboxHWNDCreator( HWND parent, const wString name, uint8_t dimType, sbWnd
 		parent,
 		NULL,
 		GetModuleHandleW( NULL ),
-		NULL
+		wnd
 	);
 }
 
-HWND BasicTextWindowHWNDCreator( HWND parent, const wString name, uint8_t dimType, sbWnd_Dims *dims ) {
+HWND BasicTextWindowHWNDCreator( HWND parent, const wString name, uint8_t dimType, sbWnd_Dims *dims, sbWnd *wnd ) {
 
 	DWORD style = WS_OVERLAPPEDWINDOW;
 	if ( parent != NULL )
@@ -149,12 +149,12 @@ HWND BasicTextWindowHWNDCreator( HWND parent, const wString name, uint8_t dimTyp
 		parent,
 		NULL,
 		GetModuleHandleW( NULL ),
-		NULL
+		wnd
 	);
 
 }
 
-HWND ClickableWindowHWNDCreator( HWND parent, const wString name, uint8_t dimType, sbWnd_Dims *dims ) {
+HWND ClickableWindowHWNDCreator( HWND parent, const wString name, uint8_t dimType, sbWnd_Dims *dims, sbWnd *wnd ) {
 	// Clickable windows MUST have a parent window.
 	if ( parent == NULL ) return NULL;
 
@@ -170,11 +170,11 @@ HWND ClickableWindowHWNDCreator( HWND parent, const wString name, uint8_t dimTyp
 		parent,
 		NULL,
 		GetModuleHandleW( NULL ),
-		NULL
+		wnd
 	);
 }
 
-HWND RestrictedImageWindowHWNDCreator( HWND parent, const wString name, uint8_t dimType, sbWnd_Dims *dims ) {
+HWND RestrictedImageWindowHWNDCreator( HWND parent, const wString name, uint8_t dimType, sbWnd_Dims *dims, sbWnd *wnd ) {
 	
 	DWORD style = WS_OVERLAPPEDWINDOW;
 	if ( parent != NULL )
@@ -192,11 +192,11 @@ HWND RestrictedImageWindowHWNDCreator( HWND parent, const wString name, uint8_t 
 		parent,
 		NULL,
 		GetModuleHandleW( NULL ),
-		NULL
+		wnd
 	);
 }
 
-HWND MasterWindowHWNDCreator( HWND parent, const wString name, uint8_t dimType, sbWnd_Dims *dims ) {
+HWND MasterWindowHWNDCreator( HWND parent, const wString name, uint8_t dimType, sbWnd_Dims *dims, sbWnd *wnd ) {
 	if ( parent != NULL )
 		return NULL; // Master windows are not allowed to have a parent.
 
@@ -212,11 +212,11 @@ HWND MasterWindowHWNDCreator( HWND parent, const wString name, uint8_t dimType, 
 		parent,
 		NULL,
 		GetModuleHandleW( NULL ),
-		NULL
+		wnd
 	);
 }
 
-HWND ViewcmdMasterWindowHWNDCreator( HWND parent, const wString name, uint8_t dimType, sbWnd_Dims *dims ) {
+HWND ViewcmdMasterWindowHWNDCreator( HWND parent, const wString name, uint8_t dimType, sbWnd_Dims *dims, sbWnd *wnd ) {
 
 	DWORD style = WS_OVERLAPPEDWINDOW;
 	if ( parent != NULL )
@@ -234,11 +234,11 @@ HWND ViewcmdMasterWindowHWNDCreator( HWND parent, const wString name, uint8_t di
 		parent,
 		NULL,
 		GetModuleHandleW( NULL ),
-		NULL
+		wnd
 	);
 }
 
-HWND StringWindowHWNDCreator( HWND parent, const wString name, uint8_t dimType, sbWnd_Dims *dims ) {
+HWND StringWindowHWNDCreator( HWND parent, const wString name, uint8_t dimType, sbWnd_Dims *dims, sbWnd *wnd ) {
 
 	DWORD style = WS_OVERLAPPEDWINDOW;
 	if ( parent != NULL )
@@ -256,11 +256,11 @@ HWND StringWindowHWNDCreator( HWND parent, const wString name, uint8_t dimType, 
 		parent,
 		NULL,
 		GetModuleHandleW( NULL ),
-		NULL
+		wnd
 	);
 }
 
-HWND ProgressBarWindowHWNDCreator( HWND parent, const wString name, uint8_t dimType, sbWnd_Dims *dims ) {
+HWND ProgressBarWindowHWNDCreator( HWND parent, const wString name, uint8_t dimType, sbWnd_Dims *dims, sbWnd *wnd ) {
 	// Progress bars MUST have a parent window.
 	if ( parent == NULL ) return NULL;
 	
@@ -276,11 +276,11 @@ HWND ProgressBarWindowHWNDCreator( HWND parent, const wString name, uint8_t dimT
 		parent,
 		NULL,
 		GetModuleHandleW( NULL ),
-		NULL
+		wnd
 	);
 }
 
-HWND DldcmdMasterWindowHWNDCreator( HWND parent, const wString name, uint8_t dimType, sbWnd_Dims *dims ) {
+HWND DldcmdMasterWindowHWNDCreator( HWND parent, const wString name, uint8_t dimType, sbWnd_Dims *dims, sbWnd *wnd ) {
 
 	DWORD style = WS_OVERLAPPEDWINDOW;
 	if ( parent != NULL )
@@ -298,19 +298,18 @@ HWND DldcmdMasterWindowHWNDCreator( HWND parent, const wString name, uint8_t dim
 		parent,
 		NULL,
 		GetModuleHandleW( NULL ),
-		NULL
+		wnd
 	);
 }
 
 sbWnd *BasicWindowCreator( HWND parent, const wString name, uint8_t dimType, sbWnd_Dims *dims ) {
 	sbWnd *fin = CommonInfoCreator( parent, name, dimType, dims );
-	fin->hwnd = BasicWindowHWNDCreator( parent, name, dimType, dims );
+	fin->hwnd = BasicWindowHWNDCreator( parent, name, dimType, dims, fin );
 	
 	if ( fin->hwnd == NULL )
 		return NULL;
 
 	fin->type = BASIC_WINDOW;
-	Maps.Insert( SbGUIMaster.WindowMap, fin->hwnd, fin );
 	if ( SbGUIMaster.createMode )
 		ShowWindow( fin->hwnd, SW_SHOW );
 	return fin;
@@ -318,14 +317,13 @@ sbWnd *BasicWindowCreator( HWND parent, const wString name, uint8_t dimType, sbW
 
 sbWnd *TextboxCreator( HWND parent, const wString name, uint8_t dimType, sbWnd_Dims *dims, int enterAction ) {
 	sbWnd *fin = CommonInfoCreator( parent, name, dimType, dims );
-	fin->hwnd = TextboxHWNDCreator( parent, name, dimType, dims );
+	fin->hwnd = TextboxHWNDCreator( parent, name, dimType, dims, fin );
 	
 	if ( fin->hwnd == NULL )
 		return NULL;
 
 	fin->type = TEXTBOX_WINDOW;
 	fin->specific = TextboxInfoCreator( fin->hwnd, enterAction );
-	Maps.Insert( SbGUIMaster.WindowMap, fin->hwnd, fin );
 	if ( SbGUIMaster.createMode )
 		ShowWindow( fin->hwnd, SW_SHOW );
 	return fin;
@@ -333,14 +331,13 @@ sbWnd *TextboxCreator( HWND parent, const wString name, uint8_t dimType, sbWnd_D
 
 sbWnd *BasicTextWindowCreator( HWND parent, const wString name, uint8_t dimType, sbWnd_Dims *dims, uint16_t nLines ) {
 	sbWnd *fin = CommonInfoCreator( parent, name, dimType, dims );
-	fin->hwnd = BasicTextWindowHWNDCreator( parent, name, dimType, dims );
+	fin->hwnd = BasicTextWindowHWNDCreator( parent, name, dimType, dims, fin );
 	
 	if ( fin->hwnd == NULL )
 		return NULL;
 
 	fin->type = TEXT_WINDOW;
 	fin->specific = BasicTextWindowInfoCreator( fin->hwnd, nLines );
-	Maps.Insert( SbGUIMaster.WindowMap, fin->hwnd, fin );
 	if ( SbGUIMaster.createMode )
 		ShowWindow( fin->hwnd, SW_SHOW );
 	return fin;
@@ -348,14 +345,13 @@ sbWnd *BasicTextWindowCreator( HWND parent, const wString name, uint8_t dimType,
 
 sbWnd *ClickableWindowCreator( HWND parent, const wString name, uint8_t dimType, sbWnd_Dims *dims ) {
 	sbWnd *fin = CommonInfoCreator( parent, name, dimType, dims );
-	fin->hwnd = ClickableWindowHWNDCreator( parent, name, dimType, dims );
+	fin->hwnd = ClickableWindowHWNDCreator( parent, name, dimType, dims, fin );
 	
 	if ( fin->hwnd == NULL )
 		return NULL;
 
 	fin->type = CLICKABLE_WINDOW;
 	fin->specific = ClickableWindowInfoCreator( );
-	Maps.Insert( SbGUIMaster.WindowMap, fin->hwnd, fin );
 	if ( SbGUIMaster.createMode )
 		ShowWindow( fin->hwnd, SW_SHOW );
 	return fin;
@@ -363,14 +359,13 @@ sbWnd *ClickableWindowCreator( HWND parent, const wString name, uint8_t dimType,
 
 sbWnd *RestrictedImageWindowCreator( HWND parent, const wString name, uint8_t dimType, sbWnd_Dims *dims, const wString path ) {
 	sbWnd *fin = CommonInfoCreator( parent, name, dimType, dims );
-	fin->hwnd = RestrictedImageWindowHWNDCreator( parent, name, dimType, dims );
+	fin->hwnd = RestrictedImageWindowHWNDCreator( parent, name, dimType, dims, fin );
 	
 	if ( fin->hwnd == NULL )
 		return NULL;
 
 	fin->type = RESTRICTED_IMAGE_WINDOW;
 	fin->specific = RestrictedImageWindowInfoCreator( fin->hwnd, path );
-	Maps.Insert( SbGUIMaster.WindowMap, fin->hwnd, fin );
 	if ( SbGUIMaster.createMode )
 		ShowWindow( fin->hwnd, SW_SHOW );
 	return fin;
@@ -381,13 +376,12 @@ sbWnd *MasterWindowCreator( HWND parent, const wString name, uint8_t dimType, sb
 		return NULL;
 
 	sbWnd *fin = CommonInfoCreator( parent, name, dimType, dims );
-	fin->hwnd = MasterWindowHWNDCreator( parent, name, dimType, dims );
+	fin->hwnd = MasterWindowHWNDCreator( parent, name, dimType, dims, fin );
 
 	if ( fin->hwnd == NULL )
 		return NULL;
 
 	fin->type = MASTER_WINDOW;
-	Maps.Insert( SbGUIMaster.WindowMap, fin->hwnd, fin );
 	if ( SbGUIMaster.createMode )
 		ShowWindow( fin->hwnd, SW_SHOW );
 	SbGUIMaster.masterWnd = fin;
@@ -396,13 +390,12 @@ sbWnd *MasterWindowCreator( HWND parent, const wString name, uint8_t dimType, sb
 
 sbWnd *ViewcmdMasterWindowCreator( HWND parent, const wString name, uint8_t dimType, sbWnd_Dims *dims ) {
 	sbWnd *fin = CommonInfoCreator( parent, name, dimType, dims );
-	fin->hwnd = ViewcmdMasterWindowHWNDCreator( parent, name, dimType, dims );
+	fin->hwnd = ViewcmdMasterWindowHWNDCreator( parent, name, dimType, dims, fin );
 	
 	if ( fin->hwnd == NULL )
 		return NULL;
 
 	fin->type = VIEWCMD_MASTER_WINDOW;
-	Maps.Insert( SbGUIMaster.WindowMap, fin->hwnd, fin );
 	if ( SbGUIMaster.createMode ) {
 		ShowWindow( fin->hwnd, SW_SHOW );
 		UpdateWindow( fin->hwnd );
@@ -418,14 +411,13 @@ sbWnd *StringWindowCreator( HWND parent, const wString name, uint8_t dimType, sb
 	selfSize.intDims[3] = fontSize + 2;
 
 	sbWnd *fin = CommonInfoCreator( parent, name, ( dimType & 0x3C ), &selfSize );
-	fin->hwnd = StringWindowHWNDCreator( parent, name, ( dimType & 0x3C ), &selfSize );
+	fin->hwnd = StringWindowHWNDCreator( parent, name, ( dimType & 0x3C ), &selfSize, fin );
 	
 	if ( fin->hwnd == NULL )
 		return NULL;
 
 	fin->specific = StringWindowInfoCreator( str, fontSize, clickable );
 	fin->type = STRING_WINDOW;
-	Maps.Insert( SbGUIMaster.WindowMap, fin->hwnd, fin );
 	if ( SbGUIMaster.createMode ) {
 		ShowWindow( fin->hwnd, SW_SHOW );
 		UpdateWindow( fin->hwnd );
@@ -435,13 +427,12 @@ sbWnd *StringWindowCreator( HWND parent, const wString name, uint8_t dimType, sb
 
 sbWnd *DldcmdMasterWindowCreator( HWND parent, const wString name, uint8_t dimType, sbWnd_Dims *dims ) {
 	sbWnd *fin = CommonInfoCreator( parent, name, dimType, dims );
-	fin->hwnd = DldcmdMasterWindowHWNDCreator( parent, name, dimType, dims );
+	fin->hwnd = DldcmdMasterWindowHWNDCreator( parent, name, dimType, dims, fin );
 	
 	if ( fin->hwnd == NULL )
 		return NULL;
 
 	fin->type = DLDCMD_MASTER_WINDOW;
-	Maps.Insert( SbGUIMaster.WindowMap, fin->hwnd, fin );
 	if ( SbGUIMaster.createMode ) {
 		ShowWindow( fin->hwnd, SW_SHOW );
 		UpdateWindow( fin->hwnd );
@@ -451,14 +442,13 @@ sbWnd *DldcmdMasterWindowCreator( HWND parent, const wString name, uint8_t dimTy
 
 sbWnd *ProgressBarWindowCreator( HWND parent, const wString name, uint8_t dimType, sbWnd_Dims *dims, uint16_t total ) {
 	sbWnd *fin = CommonInfoCreator( parent, name, dimType, dims );
-	fin->hwnd = ProgressBarWindowHWNDCreator( parent, name, dimType, dims );
+	fin->hwnd = ProgressBarWindowHWNDCreator( parent, name, dimType, dims, fin );
 	
 	if ( fin->hwnd == NULL )
 		return NULL;
 
 	fin->type = PROGRESS_BAR_WINDOW;
 	fin->specific = ProgressBarWindowInfoCreator( total );
-	Maps.Insert( SbGUIMaster.WindowMap, fin->hwnd, fin );
 	if ( SbGUIMaster.createMode )
 		ShowWindow( fin->hwnd, SW_SHOW );
 	return fin;
@@ -554,7 +544,7 @@ SBProgressBarWindowInfo *ProgressBarWindowInfoCreator( uint16_t total ) {
 void destroy_SbBasicWindow( sbWnd *wnd ) {
 	if ( wnd == NULL )
 		return;
-	Maps.Delete( SbGUIMaster.WindowMap, GetHWND( wnd ) );
+
 	Lists.Delete( wnd->referenceList );
 	DestroyWindow( GetHWND( wnd ) );
 	free( wnd->dims );
@@ -564,7 +554,7 @@ void destroy_SbBasicWindow( sbWnd *wnd ) {
 void destroy_SbTextbox( sbWnd *wnd ) {
 	if ( wnd == NULL )
 		return;
-	Maps.Delete( SbGUIMaster.WindowMap, GetHWND( wnd ) );
+
 	Lists.Delete( wnd->referenceList );
 	DestroyWindow( GetHWND( wnd ) );
 	sbWnd_DeleteTextboxInfo( wnd->specific );
@@ -575,7 +565,7 @@ void destroy_SbTextbox( sbWnd *wnd ) {
 void destroy_SbBasicTextWindow( sbWnd *wnd ) {
 	if ( wnd == NULL )
 		return;
-	Maps.Delete( SbGUIMaster.WindowMap, GetHWND( wnd ) );
+	
 	Lists.Delete( wnd->referenceList );
 	DestroyWindow( GetHWND( wnd ) );
 	sbWnd_DeleteBasicTextWindowInfo( wnd->specific );
@@ -586,7 +576,7 @@ void destroy_SbBasicTextWindow( sbWnd *wnd ) {
 void destroy_SbClickableWindow( sbWnd *wnd ) {
 	if ( wnd == NULL )
 		return;
-	Maps.Delete( SbGUIMaster.WindowMap, GetHWND( wnd ) );
+	
 	Lists.Delete( wnd->referenceList );
 	DestroyWindow( GetHWND( wnd ) );
 	sbWnd_DeleteClickableWindowInfo( wnd->specific );
@@ -597,7 +587,7 @@ void destroy_SbClickableWindow( sbWnd *wnd ) {
 void destroy_SbRestrictedImageWindow( sbWnd *wnd ) {
 	if ( wnd == NULL )
 		return;
-	Maps.Delete( SbGUIMaster.WindowMap, GetHWND( wnd ) );
+	
 	Lists.Delete( wnd->referenceList );
 	DestroyWindow( GetHWND( wnd ) );
 	sbWnd_DeleteRestrictedImageWindowInfo( wnd->specific );
@@ -608,7 +598,7 @@ void destroy_SbRestrictedImageWindow( sbWnd *wnd ) {
 void destroy_SbMasterWindow( sbWnd *wnd ) {
 	if ( wnd == NULL )
 		return;
-	Maps.Delete( SbGUIMaster.WindowMap, GetHWND( wnd ) );
+	
 	Lists.Delete( wnd->referenceList );
 	DestroyWindow( GetHWND( wnd ) );
 	free( wnd->dims );
@@ -618,7 +608,7 @@ void destroy_SbMasterWindow( sbWnd *wnd ) {
 void destroy_SbViewcmdMasterWindow( sbWnd *wnd ) {
 	if ( wnd == NULL )
 		return;
-	Maps.Delete( SbGUIMaster.WindowMap, GetHWND( wnd ) );
+	
 	Lists.Delete( wnd->referenceList );
 	DestroyWindow( GetHWND( wnd ) );
 	free( wnd->dims );
@@ -628,7 +618,7 @@ void destroy_SbViewcmdMasterWindow( sbWnd *wnd ) {
 void destroy_SbStringWindow( sbWnd *wnd ) {
 	if ( wnd == NULL )
 		return;
-	Maps.Delete( SbGUIMaster.WindowMap, GetHWND( wnd ) );
+	
 	Lists.Delete( wnd->referenceList );
 	DestroyWindow( GetHWND( wnd ) );
 	sbWnd_DeleteStringWindowInfo( wnd->specific );
@@ -639,7 +629,7 @@ void destroy_SbStringWindow( sbWnd *wnd ) {
 void destroy_SbProgressBarWindow( sbWnd *wnd ) {
 	if ( wnd == NULL )
 		return;
-	Maps.Delete( SbGUIMaster.WindowMap, GetHWND( wnd ) );
+	
 	Lists.Delete( wnd->referenceList );
 	DestroyWindow( GetHWND( wnd ) );
 	sbWnd_DeleteProgressBarWindowInfo( wnd->specific );
@@ -650,7 +640,7 @@ void destroy_SbProgressBarWindow( sbWnd *wnd ) {
 void destroy_SbDldcmdMasterWindow( sbWnd *wnd ) {
 	if ( wnd == NULL )
 		return;
-	Maps.Delete( SbGUIMaster.WindowMap, GetHWND( wnd ) );
+	
 	Lists.Delete( wnd->referenceList );
 	DestroyWindow( GetHWND( wnd ) );
 	free( wnd->dims );

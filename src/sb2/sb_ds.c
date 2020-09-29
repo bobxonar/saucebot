@@ -8,11 +8,6 @@
 DatastructuresStruct Datastructures;
 
 void initDS(void) {
-	Datastructures.Map.New = newmap;
-	Datastructures.Map.Insert = insmap;
-	Datastructures.Map.Search = searchmap;
-	Datastructures.Map.Delete = delmap;
-	Datastructures.Map.Destroy = destroymap;
 	Datastructures.List.New = newlist;
 	Datastructures.List.Add = addtoendoflist;
 	Datastructures.List.Remove = removefromlist;
@@ -21,115 +16,6 @@ void initDS(void) {
 	Datastructures.List.Set = setiteminlist;
 	Datastructures.List.Size = sizeoflist;
 	Datastructures.List.Delete = deletelist;
-}
-
-sbMap *newmap(void) {
-	sbMap *map = newptr(sbMap);
-	if (map == NULL) return NULL;
-	map->map = newarr(Bucket, 64);
-	if (map->map == NULL) return NULL;
-	map->count = 0;
-	map->size = 64;
-	return map;
-}
-
-void *insmap(sbMap *hashmap, void *key, void *data) {
-	uint8_t idx = (TABLE_PRIME * (uint64_t)key) % hashmap->size;
-	hashmap->count++;
-	Bucket *toFill = hashmap->map[idx];
-	if (toFill != NULL) {
-		toFill->current = toFill->head;
-		while (toFill->current->next != NULL)
-			toFill->current = toFill->current->next;
-		toFill->current->next = newptr(BucketNode);
-		toFill->current->next->Items.data = data;
-		toFill->current->next->Items.key = key;
-		toFill->current->next->prev = toFill->current;
-		toFill->current = toFill->current->next;
-		toFill->tail = toFill->current;
-		return data;
-	} else {
-		toFill = newptr(Bucket);
-		hashmap->map[idx] = toFill;
-		toFill->head = toFill->current = toFill->tail = newptr(BucketNode);
-		toFill->current->Items.data = data;
-		toFill->current->Items.key = key;
-		toFill->current->next = NULL;
-		toFill->current->prev = NULL;
-		return data;
-	}
-	return NULL;
-}
-
-void *searchmap(sbMap *hashmap, void *key) {
-	uint8_t idx = (TABLE_PRIME * (uint64_t)key) % hashmap->size;
-	Bucket *toSearch = hashmap->map[idx];
-	if (toSearch == NULL) return NULL;
-	toSearch->current = toSearch->head;
-	while (toSearch->current != NULL) {
-		if (key == toSearch->current->Items.key)
-			return toSearch->current->Items.data;
-		toSearch->current = toSearch->current->next;
-	}
-	return NULL;
-}
-
-void *delmap(sbMap *hashmap, void *key) {
-	uint8_t idx = (TABLE_PRIME * (uint64_t)key) % hashmap->size;
-	Bucket *toSearch = hashmap->map[idx];
-	if (toSearch == NULL) return NULL;
-	toSearch->current = toSearch->head;
-	while (toSearch->current != NULL) {
-		if (key == toSearch->current->Items.key) {
-			void *ret = toSearch->current->Items.data;
-			if ( delbucketnode( toSearch, toSearch->current ) )
-				hashmap->map[idx] = NULL;
-			return ret;
-		}
-		toSearch->current = toSearch->current->next;
-	}
-	return NULL;
-}
-
-void destroymap( sbMap *map ) {
-	uint16_t i;
-	Bucket **bucketArr = map->map;
-	for ( i = 0; i < map->size; ++i )
-		delbucket( bucketArr[i] );
-	free( bucketArr );
-	free( map );
-}
-
-void delbucket( Bucket *bucket ) {
-	if ( bucket == NULL )
-		return;
-	BucketNode *current = bucket->head;
-	while ( current->next != NULL ) {
-		free( current->prev );
-		current = current->next;
-	}
-	free( current );
-	return;
-}
-
-int delbucketnode( Bucket *bucket, BucketNode *node ) {
-	if ( node->prev != NULL )
-		node->prev->next = node->next;
-	else
-		bucket->head = node->next;
-	
-	if ( node->next != NULL )
-		node->next->prev = node->prev;
-	else
-		bucket->tail = node->prev;
-	
-	free( node );
-	if ( bucket->head == NULL ) {
-		free( bucket );
-		return 1;
-	}
-	
-	return 0;
 }
 
 sbList *newlist(void) {

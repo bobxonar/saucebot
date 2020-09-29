@@ -99,11 +99,7 @@ uint32_t getStringWidth_AllTypes( wString str, uint32_t size ) {
 void changeDims_AllTypes( GENERICWND sbWnd *wnd, uint8_t dimType, sbWnd_Dims *dims ) {
 	wnd->dimType = dimType;
 	memcpy( wnd->dims, dims, sizeof( sbWnd_Dims ) );
-	sbMap *m = Maps.New( );
-	EnumChildWindows( wnd->hwnd, ChildHideProc, ( LPARAM )m );
 	ChildSizingProc( wnd->hwnd, 0 ); // Evaluates dimensions, moves the window, repaints the window.
-	EnumChildWindows( wnd->hwnd, ChildShowProc, ( LPARAM )m );
-	Maps.Destroy( m );
 }
 
 void toSurface_AllTypes( GENERICWND sbWnd *wnd ) {
@@ -121,9 +117,10 @@ void getDims_AllTypes( GENERICWND sbWnd *wnd, uint8_t *dimType, sbWnd_Dims *dims
 }
 
 sbWnd *getParent_AllTypes( GENERICWND sbWnd *wnd ) {
-	HWND phwnd = GetParent( wnd->hwnd );
+	HWND phwnd = wnd->parent;
 	if ( phwnd != NULL )
-		return Maps.Search( SbGUIMaster.WindowMap, phwnd );
+		return ( void * )GetWindowLongPtrW( wnd->parent, GWLP_USERDATA );
+
 	return NULL;
 }
 

@@ -78,7 +78,6 @@ void SetUpSbGUIMaster( void ) {
 	SbGUIMaster.gdipToken = tok;
 	SbGUIMaster.large_id = 0;
 	SbGUIMaster.createMode = SBWND_CREATEMODE_SHOW;
-	SbGUIMaster.WindowMap = Maps.New( );
 	SbGUIMaster.WindowClassNameArray = newarr( wString, NUM_CLASSES );
 	LOGFONTW *consolasFont = newptr( LOGFONTW );
 	wcscpy( consolasFont->lfFaceName, L"Consolas" );
@@ -124,6 +123,7 @@ void RegisterClasses( void ) {
 	txtbox.hInstance = inst;
 	txtbox.lpszClassName = SbGUIMaster.WindowClassNameArray[ TEXTBOX_WINDOW ];
 	txtbox.hCursor = LoadCursor( NULL, IDC_IBEAM );
+	txtbox.cbWndExtra = sizeof( sbWnd * );
 
 	basic.cbSize = sizeof( WNDCLASSEXW );
 	basic.lpfnWndProc = BasicWndProc;
@@ -131,6 +131,7 @@ void RegisterClasses( void ) {
 	basic.hCursor = LoadCursor( NULL, IDC_ARROW );
 	basic.hbrBackground = white;
 	basic.lpszClassName = SbGUIMaster.WindowClassNameArray[ BASIC_WINDOW ];
+	basic.cbWndExtra = sizeof( sbWnd * );
 
 	text.cbSize = sizeof( WNDCLASSEXW );
 	text.lpfnWndProc = TextWndProc;
@@ -138,12 +139,14 @@ void RegisterClasses( void ) {
 	text.lpszClassName = SbGUIMaster.WindowClassNameArray[ TEXT_WINDOW ];
 	text.hCursor = LoadCursor( NULL, IDC_ARROW );
 	text.hbrBackground = white;
+	text.cbWndExtra = sizeof( sbWnd * );
 
 	clickable.cbSize = sizeof( WNDCLASSEXW );
 	clickable.lpfnWndProc = ClickableProc;
 	clickable.hInstance = inst;
 	clickable.lpszClassName = SbGUIMaster.WindowClassNameArray[ CLICKABLE_WINDOW ];
-	clickable.hCursor = LoadCursor( NULL, IDC_HAND);
+	clickable.hCursor = LoadCursor( NULL, IDC_HAND );
+	clickable.cbWndExtra = sizeof( sbWnd * );
 
 	restrictedImage.cbSize = sizeof( WNDCLASSEXW );
 	restrictedImage.lpfnWndProc = RestrictedImageProc;
@@ -151,6 +154,7 @@ void RegisterClasses( void ) {
 	restrictedImage.lpszClassName = SbGUIMaster.WindowClassNameArray[ RESTRICTED_IMAGE_WINDOW ];
 	restrictedImage.hCursor = LoadCursor( NULL, IDC_ARROW );
 	restrictedImage.hbrBackground = white;
+	restrictedImage.cbWndExtra = sizeof( sbWnd * );
 
 	master.cbSize = sizeof( WNDCLASSEXW );
 	master.lpfnWndProc = MasterProc;
@@ -172,29 +176,34 @@ void RegisterClasses( void ) {
 	);
 	master.lpszMenuName = MAKEINTRESOURCEW( MENU_ONE );
 	master.hCursor = LoadCursor( NULL, IDC_ARROW );
+	master.cbWndExtra = sizeof( sbWnd * );
 
 	viewmaster.cbSize = sizeof( WNDCLASSEXW );
 	viewmaster.lpfnWndProc = ViewcmdMasterProc;
 	viewmaster.hInstance = inst;
 	viewmaster.lpszClassName = SbGUIMaster.WindowClassNameArray[ VIEWCMD_MASTER_WINDOW ];
 	viewmaster.hbrBackground = white;
+	viewmaster.cbWndExtra = sizeof( sbWnd * );
 
 	string.cbSize = sizeof( WNDCLASSEXW );
 	string.lpfnWndProc = StringProc;
 	string.hInstance = inst;
 	string.lpszClassName = SbGUIMaster.WindowClassNameArray[ STRING_WINDOW ];
+	string.cbWndExtra = sizeof( sbWnd * );
 
 	progbar.cbSize = sizeof( WNDCLASSEXW );
 	progbar.lpfnWndProc = ProgressBarProc;
 	progbar.hInstance = inst;
 	progbar.lpszClassName = SbGUIMaster.WindowClassNameArray[ PROGRESS_BAR_WINDOW ];
 	progbar.hbrBackground = white;
+	progbar.cbWndExtra = sizeof( sbWnd * );
 
 	dldmaster.cbSize = sizeof( WNDCLASSEXW );
 	dldmaster.lpfnWndProc = DldcmdMasterProc;
 	dldmaster.hInstance = inst;
 	dldmaster.lpszClassName = SbGUIMaster.WindowClassNameArray[ DLDCMD_MASTER_WINDOW ];
 	dldmaster.hbrBackground = white;
+	dldmaster.cbWndExtra = sizeof( sbWnd * );
 
 	RegisterClassExW( &basic );
 	RegisterClassExW( &txtbox );
@@ -224,7 +233,6 @@ void shutdownSB( void ) {
 	free( SbGUIMaster.WindowClassNameArray );
 	free( SbGUIMaster.currentFont );
 	SBBasicWindows.destroy( SbGUIMaster.testWnd );
-	Maps.Destroy( SbGUIMaster.WindowMap );
 	Lists.Delete( SbGUIMaster.TopLevelWindows );
 	GdiplusShutdown( SbGUIMaster.gdipToken );
 	return;

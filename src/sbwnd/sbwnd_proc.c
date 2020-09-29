@@ -22,9 +22,21 @@
 LRESULT CALLBACK BasicWndProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam ) {
 	switch( msg ) {
 
+		case WM_CREATE: {
+			sbWnd *wnd = ( ( CREATESTRUCTW * )lParam )->lpCreateParams;
+			SetWindowLongPtrW( hwnd, GWLP_USERDATA, ( LONG_PTR )wnd );
+			break;
+		}
+
 		case WM_LBUTTONDOWN:
 			SetFocus( hwnd );
 			break;
+
+		case WM_MOUSEMOVE: {
+			sbWnd *wnd = ( void * )GetWindowLongPtrW( hwnd, GWLP_USERDATA );
+			SbGUIMaster.currentCursorWnd = wnd;
+			break;
+		}
 
 		case WM_ERASEBKGND: {
 			HDC dc = ( void * )wParam;
@@ -55,12 +67,24 @@ LRESULT CALLBACK BasicWndProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam
 LRESULT CALLBACK TextboxProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam ) {
 	switch( msg ) {
 
+		case WM_CREATE: {
+			sbWnd *wnd = ( ( CREATESTRUCTW * )lParam )->lpCreateParams;
+			SetWindowLongPtrW( hwnd, GWLP_USERDATA, ( LONG_PTR )wnd );
+			break;
+		}
+
 		case WM_LBUTTONDOWN:
 			SetFocus( hwnd );
 			break;
 
+		case WM_MOUSEMOVE: {
+			sbWnd *wnd = ( void * )GetWindowLongPtrW( hwnd, GWLP_USERDATA );
+			SbGUIMaster.currentCursorWnd = wnd;
+			break;
+		}
+
 		case WM_SETFOCUS: {
-			sbWnd *wnd = Maps.Search( SbGUIMaster.WindowMap, hwnd );
+			sbWnd *wnd = ( void * )GetWindowLongPtrW( hwnd, GWLP_USERDATA );
 			SBTextboxInfo *info = GetSpecificHandle( wnd );
 
 			RECT r = *info->tbRect;
@@ -78,7 +102,7 @@ LRESULT CALLBACK TextboxProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam 
 			break;
 
 		case WM_COMMAND: {
-			sbWnd *sbw = Maps.Search(SbGUIMaster.WindowMap, hwnd);
+			sbWnd *sbw = ( void * )GetWindowLongPtrW( hwnd, GWLP_USERDATA );
 			SBTextboxInfo *info = GetSpecificHandle( sbw );
 			CHK_FOCUS_SEND_MSG( hwnd, msg, wParam, lParam );
 			switch( LOWORD( wParam ) ) {
@@ -101,16 +125,11 @@ LRESULT CALLBACK TextboxProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam 
 		}
 
 		case WM_SIZE: {
-			UpdateWindow( hwnd );
-			break;
-		}
-
-		case SBM_SIZE: {
 
 			if ( GetFocus( ) == hwnd )
 				DestroyCaret( );
 
-			sbWnd *wnd = Maps.Search( SbGUIMaster.WindowMap, hwnd );
+			sbWnd *wnd = ( void * )GetWindowLongPtrW( hwnd, GWLP_USERDATA );
 			SBTextboxInfo *info = GetSpecificHandle( wnd );
 			UpdateTextboxInfo( wnd );
 
@@ -130,7 +149,7 @@ LRESULT CALLBACK TextboxProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam 
 			if ( GetFocus( ) == hwnd )
 				HideCaret( hwnd );
 
-			sbWnd *wnd = Maps.Search( SbGUIMaster.WindowMap, hwnd );
+			sbWnd *wnd = ( void * )GetWindowLongPtrW( hwnd, GWLP_USERDATA );
 			SBTextboxInfo *info = GetSpecificHandle( wnd );
 
 			int h = info->currentFont->lfHeight;
@@ -144,9 +163,10 @@ LRESULT CALLBACK TextboxProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam 
 
 			break;
 		}
+
 		case WM_CHAR: {
 
-			sbWnd *wnd = Maps.Search( SbGUIMaster.WindowMap, hwnd );
+			sbWnd *wnd = ( void * )GetWindowLongPtrW( hwnd, GWLP_USERDATA );
 			SBTextboxInfo *info = GetSpecificHandle( wnd );
 
 			if ( wParam == VK_RETURN && info->enterAction )
@@ -186,13 +206,14 @@ LRESULT CALLBACK TextboxProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam 
 
 			InvalidateRect( hwnd, NULL, TRUE );
 			UpdateWindow( hwnd );
+			
 			SetCaretPos( info->currentCaretPosition, 1 );
 			ShowCaret( hwnd );
 
 			if ( send )
 				SBWindows.signalFn( wnd, wnd, str );
-			else
-				free( str );
+
+			free( str );
 			
 			break;
 		}
@@ -212,7 +233,7 @@ LRESULT CALLBACK TextboxProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam 
 
 			// This is the text rendering machine.
 
-			sbWnd *wnd = Maps.Search( SbGUIMaster.WindowMap, hwnd );
+			sbWnd *wnd = ( void * )GetWindowLongPtrW( hwnd, GWLP_USERDATA );
 			SBTextboxInfo *info = GetSpecificHandle( wnd );
 			wString str = SBTextboxes.getString( wnd );
 			LOGFONTW *logfont = info->currentFont;
@@ -261,6 +282,12 @@ LRESULT CALLBACK TextboxProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam 
 
 LRESULT CALLBACK TextWndProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam ) {
 	switch( msg ) {
+		
+		case WM_CREATE: {
+			sbWnd *wnd = ( ( CREATESTRUCTW * )lParam )->lpCreateParams;
+			SetWindowLongPtrW( hwnd, GWLP_USERDATA, ( LONG_PTR )wnd );
+			break;
+		}
 
 		case WM_ERASEBKGND: {
 			HDC dc = ( void * )wParam;
@@ -270,13 +297,26 @@ LRESULT CALLBACK TextWndProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam 
 			return 1;
 		}
 
+		case WM_MOUSEMOVE: {
+			sbWnd *wnd = ( void * )GetWindowLongPtrW( hwnd, GWLP_USERDATA );
+			SbGUIMaster.currentCursorWnd = wnd;
+			break;
+		}
+
 		case WM_PAINT: {
+
+			LARGE_INTEGER
+				st = { 0 },
+				ed = { 0 },
+				frq = { 0 };
+			QueryPerformanceFrequency( &frq );
+			QueryPerformanceCounter( &st );
 			
 			// Rendering text. Now featuring wrapping!
 			PAINTSTRUCT ps = { 0 };
 			HDC dc = BeginPaint( hwnd, &ps );
 
-			sbWnd *wnd = Maps.Search( SbGUIMaster.WindowMap, hwnd );
+			sbWnd *wnd = ( void * )GetWindowLongPtrW( hwnd, GWLP_USERDATA );
 			SBBasicTextWindowInfo *info = GetSpecificHandle( wnd );
 			sbList *text = info->text;
 			int h = info->fontSize;
@@ -291,14 +331,19 @@ LRESULT CALLBACK TextWndProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam 
 			GetClientRect( hwnd, &r );
 			r.left++;
 
+			// New method for drawing text that is more consistent,
+			// but not all that much faster than calling DrawTextExW so many times.
+			wchar_t
+				finArr[ 32768 ] = { 0 },
+				*finArrPtr = finArr;
+
 			for ( uint16_t i = 0; i < Lists.Size( text ); ++i ) {
 				wString str = Lists.Get( text, i );
-				DrawTextExW( dc, str, -1, &r, DT_EXPANDTABS | DT_WORDBREAK, NULL );
-
-				DWORD sz = GetTabbedTextExtentW( dc, str, wcslen( str ), 0, NULL );
-				uint16_t wrapl = LOWORD( sz ) / ( r.right - r.left );
-				r.top += h + ( h * wrapl );
+				int chprint = swprintf( finArrPtr, 32767, L"%s\n", str );
+				finArrPtr += chprint;
 			}
+
+			DrawTextExW( dc, finArr, -1, &r, DT_EXPANDTABS | DT_WORDBREAK, NULL );
 
 			SelectObject( dc, prevBrush );
 			SelectObject( dc, prevFont );
@@ -306,17 +351,21 @@ LRESULT CALLBACK TextWndProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam 
 			DeleteObject( font );
 
 			EndPaint( hwnd, &ps );
+
+			QueryPerformanceCounter( &ed );
+			double
+				t = ( double )ed.QuadPart - ( double )st.QuadPart,
+				cts = ( double )frq.QuadPart;
+
 			break;
 		}
 
-		case WM_SIZE: {
-			UpdateWindow( hwnd );
+		case WM_SIZE:
 			EnumChildWindows( hwnd, ChildSizingProc, 0 );
 			break;
-		}
 
 		case WM_LBUTTONDOWN: {
-			sbWnd *wnd = Maps.Search( SbGUIMaster.WindowMap, hwnd );
+			sbWnd *wnd = ( void * )GetWindowLongPtrW( hwnd, GWLP_USERDATA );
 			SBWindows.signalFn( wnd, wnd, NULL );
 			SetFocus( hwnd );
 			break;
@@ -324,18 +373,18 @@ LRESULT CALLBACK TextWndProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam 
 			
 		case SBM_DRAWTEXT: {
 
-			sbWnd *wnd = Maps.Search( SbGUIMaster.WindowMap, hwnd );
+			sbWnd *wnd = ( void * )GetWindowLongPtrW( hwnd, GWLP_USERDATA );
 			SBBasicTextWindowInfo *info = GetSpecificHandle( wnd );
 			Lists.Add( info->text, ( void * )wParam );
 
-			InvalidateRect( hwnd, NULL, TRUE );
+			InvalidateRect( hwnd, NULL, FALSE );
 
 			break;
 		}
 
 		case SBM_CLEARTEXT: {
 
-			sbWnd *wnd = Maps.Search( SbGUIMaster.WindowMap, hwnd );
+			sbWnd *wnd = ( void * )GetWindowLongPtrW( hwnd, GWLP_USERDATA );
 			SBBasicTextWindowInfo *info = GetSpecificHandle( wnd );
 			Lists.Delete( info->text );
 			info->text = Lists.New( );
@@ -347,7 +396,7 @@ LRESULT CALLBACK TextWndProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam 
 
 		case SBM_CHANGEFONT: {
 
-			sbWnd *wnd = Maps.Search( SbGUIMaster.WindowMap, hwnd );
+			sbWnd *wnd = ( void * )GetWindowLongPtrW( hwnd, GWLP_USERDATA );
 			SBBasicTextWindowInfo *info = GetSpecificHandle( wnd );
 
 			memcpy( info->currentFont, SbGUIMaster.currentFont, sizeof( LOGFONTW ) );
@@ -357,9 +406,11 @@ LRESULT CALLBACK TextWndProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam 
 
 			break;
 		}
+
 		case WM_CLOSE:
 			DestroyWindow( hwnd );
 			break;
+
 		default:
 			return DefWindowProcW( hwnd, msg, wParam, lParam );
 	}
@@ -368,6 +419,18 @@ LRESULT CALLBACK TextWndProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam 
 
 LRESULT CALLBACK ClickableProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam ) {
 	switch( msg ) {
+		
+		case WM_CREATE: {
+			sbWnd *wnd = ( ( CREATESTRUCTW * )lParam )->lpCreateParams;
+			SetWindowLongPtrW( hwnd, GWLP_USERDATA, ( LONG_PTR )wnd );
+			break;
+		}
+
+		case WM_MOUSEMOVE: {
+			sbWnd *wnd = ( void * )GetWindowLongPtrW( hwnd, GWLP_USERDATA );
+			SbGUIMaster.currentCursorWnd = wnd;
+			break;
+		}
 
 		case WM_ERASEBKGND: {
 			HDC dc = ( void * )wParam;
@@ -396,6 +459,12 @@ LRESULT CALLBACK ClickableProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPara
 
 LRESULT CALLBACK RestrictedImageProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam ) {
 	switch( msg ) {
+		
+		case WM_CREATE: {
+			sbWnd *wnd = ( ( CREATESTRUCTW * )lParam )->lpCreateParams;
+			SetWindowLongPtrW( hwnd, GWLP_USERDATA, ( LONG_PTR )wnd );
+			break;
+		}
 
 		case WM_ERASEBKGND: {
 			HDC dc = ( void * )wParam;
@@ -405,6 +474,12 @@ LRESULT CALLBACK RestrictedImageProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM
 			return 1;
 		}
 
+		case WM_MOUSEMOVE: {
+			sbWnd *wnd = ( void * )GetWindowLongPtrW( hwnd, GWLP_USERDATA );
+			SbGUIMaster.currentCursorWnd = wnd;
+			break;
+		}
+
 		case WM_PAINT: {
 
 			RECT r = { 0 };
@@ -412,7 +487,7 @@ LRESULT CALLBACK RestrictedImageProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM
 			uint32_t ih = r.bottom - r.top;
 			uint32_t iw = r.right - r.left;
 
-			sbWnd *wnd = Maps.Search( SbGUIMaster.WindowMap, hwnd );
+			sbWnd *wnd = ( void * )GetWindowLongPtrW( hwnd, GWLP_USERDATA );
 			SBRestrictedImageWindowInfo *info = GetSpecificHandle( wnd );
 
 			if ( !wcscmp( L"none", info->path ) )
@@ -442,12 +517,11 @@ LRESULT CALLBACK RestrictedImageProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM
 			
 			break;
 		}
-		case WM_SIZE:
-			UpdateWindow( hwnd );
-			break;
+
 		case WM_CLOSE:
 			DestroyWindow( hwnd );
 			break;
+
 		default:
 			return DefWindowProcW( hwnd, msg, wParam, lParam );
 	}
@@ -456,9 +530,22 @@ LRESULT CALLBACK RestrictedImageProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM
 
 LRESULT CALLBACK MasterProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam ) {
 	switch( msg ) {
+		
+		case WM_CREATE: {
+			sbWnd *wnd = ( ( CREATESTRUCTW * )lParam )->lpCreateParams;
+			SetWindowLongPtrW( hwnd, GWLP_USERDATA, ( LONG_PTR )wnd );
+			break;
+		}
+
 		case WM_LBUTTONDOWN:
 			SetFocus( hwnd );
 			break;
+
+		case WM_MOUSEMOVE: {
+			sbWnd *wnd = ( void * )GetWindowLongPtrW( hwnd, GWLP_USERDATA );
+			SbGUIMaster.currentCursorWnd = wnd;
+			break;
+		}
 
 		case WM_ERASEBKGND: {
 			HDC dc = ( void * )wParam;
@@ -521,9 +608,22 @@ LRESULT CALLBACK MasterProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 
 LRESULT CALLBACK ViewcmdMasterProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam ) {
 	switch( msg ) {
+		
+		case WM_CREATE: {
+			sbWnd *wnd = ( ( CREATESTRUCTW * )lParam )->lpCreateParams;
+			SetWindowLongPtrW( hwnd, GWLP_USERDATA, ( LONG_PTR )wnd );
+			break;
+		}
+
 		case WM_LBUTTONDOWN:
 			SetFocus( hwnd );
 			break;
+
+		case WM_MOUSEMOVE: {
+			sbWnd *wnd = ( void * )GetWindowLongPtrW( hwnd, GWLP_USERDATA );
+			SbGUIMaster.currentCursorWnd = wnd;
+			break;
+		}
 
 		case WM_ERASEBKGND: {
 			HDC dc = ( void * )wParam;
@@ -541,13 +641,12 @@ LRESULT CALLBACK ViewcmdMasterProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM l
 			break;
 		}
 
-		case WM_SIZE: {
+		case WM_SIZE:
 			EnumChildWindows( hwnd, ChildSizingProc, 0 );
 			break;
-		}
 
 		case WM_CHAR: {
-			sbWnd *wnd = Maps.Search( SbGUIMaster.WindowMap, hwnd );
+			sbWnd *wnd = ( void * )GetWindowLongPtrW( hwnd, GWLP_USERDATA );
 			switch( wParam ) {
 				case VK_LEFT:
 					SBWindows.signalFn( wnd, wnd, ( void * )SBEVT_PREVPAGE );
@@ -569,10 +668,16 @@ LRESULT CALLBACK ViewcmdMasterProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM l
 
 LRESULT CALLBACK StringProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam ) {
 	switch( msg ) {
+		
+		case WM_CREATE: {
+			sbWnd *wnd = ( ( CREATESTRUCTW * )lParam )->lpCreateParams;
+			SetWindowLongPtrW( hwnd, GWLP_USERDATA, ( LONG_PTR )wnd );
+			break;
+		}
 
 		case WM_ERASEBKGND: {
 
-			sbWnd *wnd = Maps.Search( SbGUIMaster.WindowMap, hwnd );
+			sbWnd *wnd = ( void * )GetWindowLongPtrW( hwnd, GWLP_USERDATA );
 			SBStringWindowInfo *info = GetSpecificHandle( wnd );
 			int state = info->mouseState;
 
@@ -598,7 +703,7 @@ LRESULT CALLBACK StringProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 			PAINTSTRUCT ps = { 0 };
 			HDC dc = BeginPaint( hwnd, &ps );
 
-			sbWnd *wnd = Maps.Search( SbGUIMaster.WindowMap, hwnd );
+			sbWnd *wnd = ( void * )GetWindowLongPtrW( hwnd, GWLP_USERDATA );
 			SBStringWindowInfo *info = GetSpecificHandle( wnd );
 			
 			int state = info->mouseState;
@@ -627,7 +732,7 @@ LRESULT CALLBACK StringProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 
 		case SBM_CHANGEFONT: {
 
-			sbWnd *wnd = Maps.Search( SbGUIMaster.WindowMap, hwnd );
+			sbWnd *wnd = ( void * )GetWindowLongPtrW( hwnd, GWLP_USERDATA );
 			SBStringWindowInfo *info = GetSpecificHandle( wnd );
 
 			memcpy( info->currentFont, SbGUIMaster.currentFont, sizeof( LOGFONTW ) );
@@ -644,7 +749,9 @@ LRESULT CALLBACK StringProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 		}
 
 		case WM_MOUSEMOVE: {
-			sbWnd *wnd = Maps.Search( SbGUIMaster.WindowMap, hwnd );
+			
+			sbWnd *wnd = ( void * )GetWindowLongPtrW( hwnd, GWLP_USERDATA );
+			SbGUIMaster.currentCursorWnd = wnd;
 			SBStringWindowInfo *info = GetSpecificHandle( wnd );
 
 			if ( !info->clickable )
@@ -669,7 +776,7 @@ LRESULT CALLBACK StringProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 		}
 
 		case WM_MOUSELEAVE: {
-			sbWnd *wnd = Maps.Search( SbGUIMaster.WindowMap, hwnd );
+			sbWnd *wnd = ( void * )GetWindowLongPtrW( hwnd, GWLP_USERDATA );
 			SBStringWindowInfo *info = GetSpecificHandle( wnd );
 			info->mouseState = 0; // Reset all bits
 			InvalidateRect( hwnd, NULL, TRUE );
@@ -680,7 +787,7 @@ LRESULT CALLBACK StringProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 			break; // Perhaps add hover functionality in the future
 
 		case WM_LBUTTONDOWN: {
-			sbWnd *wnd = Maps.Search( SbGUIMaster.WindowMap, hwnd );
+			sbWnd *wnd = ( void * )GetWindowLongPtrW( hwnd, GWLP_USERDATA );
 			SBStringWindowInfo *info = GetSpecificHandle( wnd );
 
 			if ( !info->clickable )
@@ -692,7 +799,7 @@ LRESULT CALLBACK StringProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 		}
 
 		case WM_LBUTTONUP: {
-			sbWnd *wnd = Maps.Search( SbGUIMaster.WindowMap, hwnd );
+			sbWnd *wnd = ( void * )GetWindowLongPtrW( hwnd, GWLP_USERDATA );
 			SBStringWindowInfo *info = GetSpecificHandle( wnd );
 
 			if ( !info->clickable )
@@ -706,9 +813,6 @@ LRESULT CALLBACK StringProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 			break;
 		}
 
-		case WM_SIZE:
-			InvalidateRect( hwnd, NULL, TRUE );
-			break;
 		case WM_CLOSE:
 			DestroyWindow( hwnd );
 			break;
@@ -720,13 +824,25 @@ LRESULT CALLBACK StringProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 
 LRESULT CALLBACK ProgressBarProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam ) {
 	switch ( msg ) {
+		
+		case WM_CREATE: {
+			sbWnd *wnd = ( ( CREATESTRUCTW * )lParam )->lpCreateParams;
+			SetWindowLongPtrW( hwnd, GWLP_USERDATA, ( LONG_PTR )wnd );
+			break;
+		}
+
+		case WM_MOUSEMOVE: {
+			sbWnd *wnd = ( void * )GetWindowLongPtrW( hwnd, GWLP_USERDATA );
+			SbGUIMaster.currentCursorWnd = wnd;
+			break;
+		}
 
 		case WM_PAINT: {
 			
 			PAINTSTRUCT ps = { 0 };
 			HDC dc = BeginPaint( hwnd, &ps );
 			
-			sbWnd *wnd = Maps.Search( SbGUIMaster.WindowMap, hwnd );
+			sbWnd *wnd = ( void * )GetWindowLongPtrW( hwnd, GWLP_USERDATA );
 			SBProgressBarWindowInfo *info = GetSpecificHandle( wnd );
 			RECT r = { 0 };
 			GetClientRect( hwnd, &r );
@@ -755,9 +871,22 @@ LRESULT CALLBACK ProgressBarProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
 
 LRESULT CALLBACK DldcmdMasterProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam ) {
 	switch( msg ) {
+		
+		case WM_CREATE: {
+			sbWnd *wnd = ( ( CREATESTRUCTW * )lParam )->lpCreateParams;
+			SetWindowLongPtrW( hwnd, GWLP_USERDATA, ( LONG_PTR )wnd );
+			break;
+		}
+
 		case WM_LBUTTONDOWN:
 			SetFocus( hwnd );
 			break;
+
+		case WM_MOUSEMOVE: {
+			sbWnd *wnd = ( void * )GetWindowLongPtrW( hwnd, GWLP_USERDATA );
+			SbGUIMaster.currentCursorWnd = wnd;
+			break;
+		}
 
 		case WM_ERASEBKGND: {
 			HDC dc = ( void * )wParam;
@@ -783,14 +912,12 @@ LRESULT CALLBACK DldcmdMasterProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lP
 		case WM_CLOSE:
 			DestroyWindow( hwnd );
 			break;
+
 		default:
 			return DefWindowProcW( hwnd, msg, wParam, lParam );
+
 	}
 	return 0;
-}
-
-int GetRectBottom( RECT *r ) {
-	return r->bottom;
 }
 
 void UpdateTiedown( SBTextboxInfo *info, wchar_t val ) {
@@ -839,42 +966,18 @@ void DoubleWStringCapacity( SBTextboxInfo *info ) {
 
 BOOL CALLBACK ChildSizingProc( IN HWND hwnd, IN LPARAM lParam ) {
 
-	sbWnd *wnd = Maps.Search( SbGUIMaster.WindowMap, hwnd );
+	sbWnd *wnd = ( void * )GetWindowLongPtrW( hwnd, GWLP_USERDATA );
 	dimension finDims[4] = { 0 };
 	HWND parent = GetParent( hwnd );
 
 	sbWndEvaluateDims( parent, wnd->dimType, wnd->dims, finDims );
 
 	MoveWindow( hwnd, finDims[0], finDims[1], finDims[2], finDims[3], TRUE );
-	SendMessage( hwnd, SBM_SIZE, 0, 0 );
 	return 1;
 }
 
 BOOL CALLBACK ChildFontChangeProc( IN HWND hwnd, IN LPARAM lParam) {
 	SendMessageW( hwnd, SBM_CHANGEFONT, 0, 0 );
-	return TRUE;
-}
-
-BOOL CALLBACK ChildZOrderProc( IN HWND hwnd, IN LPARAM lParam ) {
-	BringWindowToTop( hwnd );
-	InvalidateRect( hwnd, NULL, TRUE );
-	return TRUE;
-}
-
-BOOL CALLBACK ChildUpdateProc( IN HWND hwnd, IN LPARAM lParam ) {
-	InvalidateRect( hwnd, NULL, TRUE );
-	UpdateWindow( hwnd );
-	return TRUE;
-}
-
-BOOL CALLBACK ChildHideProc( IN HWND hwnd, IN LPARAM lParam ) {
-	ShowWindow( hwnd, SW_HIDE );
-	return TRUE;
-}
-
-BOOL CALLBACK ChildShowProc( IN HWND hwnd, IN LPARAM lParam ) {
-	ShowWindow( hwnd, SW_SHOW );
-	UpdateWindow( hwnd );
 	return TRUE;
 }
 

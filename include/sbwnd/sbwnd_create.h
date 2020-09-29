@@ -74,16 +74,16 @@ sbWnd *CommonInfoCreator( HWND, const wString, uint8_t, sbWnd_Dims * );
 
 void sbWndEvaluateDims( HWND, uint8_t, sbWnd_Dims *, dimension[4] );
 
-HWND BasicWindowHWNDCreator( HWND, const wString, uint8_t, sbWnd_Dims * );
-HWND TextboxHWNDCreator( HWND, const wString, uint8_t, sbWnd_Dims * );
-HWND BasicTextWindowHWNDCreator( HWND, const wString, uint8_t, sbWnd_Dims * );
-HWND ClickableWindowHWNDCreator( HWND, const wString, uint8_t, sbWnd_Dims * );
-HWND RestrictedImageWindowHWNDCreator( HWND, const wString, uint8_t, sbWnd_Dims * );
-HWND MasterWindowHWNDCreator( HWND, const wString, uint8_t, sbWnd_Dims * );
-HWND ViewcmdMasterWindowHWNDCreator( HWND, const wString, uint8_t, sbWnd_Dims * );
-HWND StringWindowHWNDCreator( HWND, const wString, uint8_t, sbWnd_Dims * );
-HWND ProgressBarWindowHWNDCreator( HWND, const wString, uint8_t, sbWnd_Dims * );
-HWND DldcmdMasterWindowHWNDCreator( HWND, const wString, uint8_t, sbWnd_Dims * );
+HWND BasicWindowHWNDCreator( HWND, const wString, uint8_t, sbWnd_Dims *, sbWnd * );
+HWND TextboxHWNDCreator( HWND, const wString, uint8_t, sbWnd_Dims *, sbWnd * );
+HWND BasicTextWindowHWNDCreator( HWND, const wString, uint8_t, sbWnd_Dims *, sbWnd * );
+HWND ClickableWindowHWNDCreator( HWND, const wString, uint8_t, sbWnd_Dims *, sbWnd * );
+HWND RestrictedImageWindowHWNDCreator( HWND, const wString, uint8_t, sbWnd_Dims *, sbWnd * );
+HWND MasterWindowHWNDCreator( HWND, const wString, uint8_t, sbWnd_Dims *, sbWnd * );
+HWND ViewcmdMasterWindowHWNDCreator( HWND, const wString, uint8_t, sbWnd_Dims *, sbWnd * );
+HWND StringWindowHWNDCreator( HWND, const wString, uint8_t, sbWnd_Dims *, sbWnd * );
+HWND ProgressBarWindowHWNDCreator( HWND, const wString, uint8_t, sbWnd_Dims *, sbWnd * );
+HWND DldcmdMasterWindowHWNDCreator( HWND, const wString, uint8_t, sbWnd_Dims *, sbWnd * );
 
 
 sbWnd *BasicWindowCreator( HWND, const wString, uint8_t, sbWnd_Dims * );

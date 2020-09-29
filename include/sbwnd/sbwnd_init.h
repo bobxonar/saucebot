@@ -17,15 +17,13 @@ typedef struct {
 	// On a call to initGUI(), this is initialized to 0.
 	// On window creation, this number increments.
 	uint16_t large_id;
-	// A map that maps HWNDs to their superset sbWnd structs. This can be used in callback functions to get sbWnd data from just an HWND type.
-	// Initialized to an empty map with size 64 on a call to initGUI();
-	// A window is inserted on window creation.
-	sbMap *WindowMap;
 	// The window that functions that get data that require a device context use. This is an invisible top-level window that recieves no messages.
 	sbWnd 
 		*testWnd,
 	// The master window--there can only be one, it can only be created once. If it's closed, the program terminates.
-		*masterWnd;
+		*masterWnd,
+	// The window which currently has the cursor hovering over it.
+		*currentCursorWnd;
 	// List of all top-level windows that are created by sbgui. All are used in the message loop.
 	sbList *TopLevelWindows;
 	// Font Family currently used by sbgui, default is Consolas.
