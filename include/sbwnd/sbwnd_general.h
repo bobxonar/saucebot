@@ -20,6 +20,7 @@
 #define STRING_WINDOW			7
 #define PROGRESS_BAR_WINDOW		8
 #define DLDCMD_MASTER_WINDOW	9
+#define VSCROLLBAR_WINDOW		10
 
 #define BASICWND
 #define TBOX
@@ -31,13 +32,14 @@
 #define STRWND
 #define PROGBARWND
 #define DLDMSTWND
+#define VSCROLLWND
 
 #define GENERICWND
 
 #define SB_CENTER_DIM(dim)	(-(dim))
 
 // Current number of total window classes availible to sbgui.
-#define NUM_CLASSES     		(10)
+#define NUM_CLASSES     		(11)
 
 // Message that tells the window to reset its font to what should be a different font size, according to the size of the window. The LPARAM will contain a boolean that, if true, tells the window to size the font to the window's full height, and if false, the window will use WPARAM as the font size. Initialized on initGUI().
 #define SBM_CHANGEFONTSIZE  (WM_APP+0x01)
@@ -158,11 +160,11 @@ typedef struct basictextinfo {
 	// A list that holds lines of text. It is seperated into lines, each node of the list contains one line of text.
 	sbList *text;
 
+	uint16_t
 	// Current line to draw to of the text window.
-	uint16_t currentLine;
-	
+		currentLine,
 	// Font size of the window.
-	uint16_t fontSize;
+		fontSize;
 
 	// Current window font.
 	LOGFONTW *currentFont;
@@ -186,11 +188,11 @@ typedef struct imagewndinfo {
 	// Current image to be drawn.
 	GpImage *img;
 
+	uint32_t
 	// Maximum width (in px) of the image.
-	uint32_t maxWidth;
-
+		maxWidth,
 	// Maximum height (in px) of the image.
-	uint32_t maxHeight;
+		maxHeight;
 
 	// Aspect ratio of the image (width / height).
 	double aspectRatio;
@@ -213,11 +215,20 @@ typedef struct strwndinfo {
 
 typedef struct progbarwndinfo {
 
-	uint16_t total;
-
-	uint16_t cur;
+	uint16_t
+		total,
+		cur;
 
 } SBProgressBarWindowInfo;
+
+typedef struct vscrollwndinfo {
+
+	uint16_t
+		incDist,
+		maxInc,
+		cur;
+
+} SBVScrollbarWindowInfo;
 
 typedef struct {
 
@@ -236,13 +247,12 @@ typedef struct {
 
 		sbWnd *( *create )( HWND, const wString, uint8_t, sbWnd_Dims *, int );
 
-		void ( *destroy )( sbWnd * );
-
-		void ( *sendString )( sbWnd *, wString );
+		void
+			( *destroy )( sbWnd * ),
+			( *sendString )( sbWnd *, wString ),
+			( *setEnterAction )( sbWnd *, int );
 
 		wString ( *getString )( sbWnd * );
-
-		void ( *setEnterAction )( sbWnd *, int );
 
 		int ( *getEnterAction )( sbWnd * );
 
@@ -253,11 +263,10 @@ typedef struct {
 
 		sbWnd *( *create )( HWND, const wString, uint8_t, sbWnd_Dims *, uint16_t );
 
-		void ( *destroy )( sbWnd * );
-
-		void ( *draw )( sbWnd *, wString );
-
-		void ( *clear )( sbWnd * );
+		void
+			( *destroy )( sbWnd * ),
+			( *draw )( sbWnd *, wString ),
+			( *clear )( sbWnd * );
 
 	} SBBasicTextWindow;
 
@@ -275,9 +284,9 @@ typedef struct {
 
 		sbWnd *( *create )( HWND, const wString, uint8_t, sbWnd_Dims *, const wString );
 
-		void ( *destroy )( sbWnd * );
-
-		void ( *updateImage )( sbWnd *, const wString );
+		void
+			( *destroy )( sbWnd * ),
+			( *updateImage )( sbWnd *, const wString );
 
 	} SBRestrictedImageWindow;
 
@@ -302,9 +311,9 @@ typedef struct {
 		// Set last parameter to nonzero for clickable, zero for static.
 		sbWnd *( *create )( HWND, const wString, uint8_t, sbWnd_Dims *, const wString, uint16_t, int );
 
-		void ( *destroy )( sbWnd * );
-
-		void ( *changeString )( sbWnd *, const wString );
+		void
+			( *destroy )( sbWnd * ),
+			( *changeString )( sbWnd *, const wString );
 
 	} SBStringWindow;
 
@@ -312,9 +321,9 @@ typedef struct {
 
 		PROGBARWND sbWnd *( *create )( HWND, const wString, uint8_t, sbWnd_Dims *, uint16_t );
 
-		void ( *destroy )( PROGBARWND sbWnd * );
-
-		void ( *advance )( PROGBARWND sbWnd * );
+		void
+			( *destroy )( PROGBARWND sbWnd * ),
+			( *advance )( PROGBARWND sbWnd * );
 
 	} SBProgressBarWindow;
 
@@ -325,6 +334,18 @@ typedef struct {
 		void ( *destroy )( DLDMSTWND sbWnd * );
 
 	} SBDldcmdMasterWindow;
+
+	struct {
+
+		VSCROLLWND sbWnd *( *create )( HWND, const wString, uint8_t, sbWnd_Dims *, uint16_t );
+
+		void
+			( *destroy )( VSCROLLWND sbWnd * ),
+			( *advance )( VSCROLLWND sbWnd * ),
+			( *retreat )( VSCROLLWND sbWnd * ),
+			( *setMaxIncrement )( VSCROLLWND sbWnd *, uint16_t );
+
+	} SBVScrollbarWindow;
 
 	// Appends data to the window's reference list. The user is responsible for keeping track of what data is at which index.
 	void ( *appendReference )( sbWnd *, void * );
@@ -375,6 +396,7 @@ extern SBWindowFnStruct SBWindow;
 #define SBStringWindows				SBWindow.SBStringWindow
 #define SBProgressBarWindows		SBWindow.SBProgressBarWindow
 #define SBDldcmdMasterWindows		SBWindow.SBDldcmdMasterWindow
+#define SBVScrollbarWindows			SBWindow.SBVScrollbarWindow
 
 
 HWND GetHWND( GENERICWND sbWnd * );
@@ -382,6 +404,8 @@ HWND GetHWND( GENERICWND sbWnd * );
 void *GetSpecificHandle( GENERICWND sbWnd * );
 
 void msgloop( void );
+
+GENERICWND
 
 void SetSignalFn_AllTypes( GENERICWND sbWnd *, sbWndSignalFn );
 void CallSignalFn_AllTypes( GENERICWND sbWnd *, GENERICWND sbWnd *, void * );
@@ -403,18 +427,35 @@ void focus_AllTypes( GENERICWND sbWnd * );
 void getDims_AllTypes( GENERICWND sbWnd *, uint8_t *, sbWnd_Dims * );
 sbWnd *getParent_AllTypes( GENERICWND sbWnd * );
 
+TBOX
+
 wString getString_SbTextbox( TBOX sbWnd * );
 void sendString_SbTextbox( TBOX sbWnd *, wString );
 void setEnterAction_SbTextbox( TBOX sbWnd *, int );
 int getEnterAction_SbTextbox( TBOX sbWnd * );
 
+BASICTXTWND
+
 void draw_SbBasicTextWindow( BASICTXTWND sbWnd *, wString );
 void clear_SbBasicTextWindow( BASICTXTWND sbWnd * );
 
+RSTIMGWND
+
 void updateImage_SbRestrictedImageWindow( RSTIMGWND sbWnd *, const wString );
+
+STRWND
 
 void changeString_SbStringWindow( STRWND sbWnd *, const wString );
 
+PROGBARWND
+
 void advance_SbProgressBarWindow( PROGBARWND sbWnd * );
+
+VSCROLLWND
+
+void
+	advance_SbVScrollbarWindow( VSCROLLWND sbWnd * ),
+	retreat_SbVScrollbarWindow( VSCROLLWND sbWnd * ),
+	setMaxIncrement_SbVScrollbarWindow( VSCROLLWND sbWnd *, uint16_t );
 
 #endif

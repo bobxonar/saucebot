@@ -35,7 +35,7 @@ void sbWndEvaluateDims( HWND parent, uint8_t dimType, sbWnd_Dims *dims, dimensio
 
 	*/
 
-	// Evaluate parent dimensions--this will eventually become recursive as
+	// Evaluate parent dimensions--this will eventually become recursive (no it wont retard) as
 	// dimension evaluation is a dynamic process as windows resize.
 	if ( dimType & 0xF && parent == NULL ) {
 	
@@ -302,6 +302,28 @@ HWND DldcmdMasterWindowHWNDCreator( HWND parent, const wString name, uint8_t dim
 	);
 }
 
+HWND VScrollbarWindowHWNDCreator( HWND parent, const wString name, uint8_t dimType, sbWnd_Dims *dims, sbWnd *wnd ) {
+
+	DWORD style = WS_OVERLAPPEDWINDOW;
+	if ( parent != NULL )
+		style = WS_CHILD;
+
+	dimension finDims[4] = { 0 };
+	sbWndEvaluateDims( parent, dimType, dims, finDims );
+	
+	return CreateWindowExW(
+		0,
+		SbGUIMaster.WindowClassNameArray[ VSCROLLBAR_WINDOW ],
+		name,
+		style,
+		finDims[0], finDims[1], finDims[2], finDims[3],
+		parent,
+		NULL,
+		GetModuleHandleW( NULL ),
+		wnd
+	);
+}
+
 sbWnd *BasicWindowCreator( HWND parent, const wString name, uint8_t dimType, sbWnd_Dims *dims ) {
 	sbWnd *fin = CommonInfoCreator( parent, name, dimType, dims );
 	fin->hwnd = BasicWindowHWNDCreator( parent, name, dimType, dims, fin );
@@ -454,6 +476,20 @@ sbWnd *ProgressBarWindowCreator( HWND parent, const wString name, uint8_t dimTyp
 	return fin;
 }
 
+sbWnd *VScrollbarWindowCreator( HWND parent, const wString name, uint8_t dimType, sbWnd_Dims *dims, uint16_t incDist ) {
+	sbWnd *fin = CommonInfoCreator( parent, name, dimType, dims );
+	fin->hwnd = VScrollbarWindowHWNDCreator( parent, name, dimType, dims, fin );
+	
+	if ( fin->hwnd == NULL )
+		return NULL;
+
+	fin->type = VSCROLLBAR_WINDOW;
+	fin->specific = VScrollbarWindowInfoCreator( incDist );
+	if ( SbGUIMaster.createMode )
+		ShowWindow( fin->hwnd, SW_SHOW );
+	return fin;
+}
+
 SBTextboxInfo *TextboxInfoCreator( HWND hwnd, int enterAction ) {
 
 	SBTextboxInfo *fin = newptr( SBTextboxInfo );
@@ -538,6 +574,14 @@ SBStringWindowInfo *StringWindowInfoCreator( const wString str, uint16_t fontSiz
 SBProgressBarWindowInfo *ProgressBarWindowInfoCreator( uint16_t total ) {
 	SBProgressBarWindowInfo *fin = newptr( SBProgressBarWindowInfo );
 	fin->total = total;
+	return fin;
+}
+
+SBVScrollbarWindowInfo *VScrollbarWindowInfoCreator( uint16_t incDist ) {
+	SBVScrollbarWindowInfo *fin = newptr( SBVScrollbarWindowInfo );
+	fin->incDist = incDist;
+	fin->maxInc = 1;
+	fin->cur = 0;
 	return fin;
 }
 
@@ -647,6 +691,16 @@ void destroy_SbDldcmdMasterWindow( sbWnd *wnd ) {
 	free( wnd );
 }
 
+void destroy_SbVScrollbarWindow( sbWnd *wnd ) {
+	if ( wnd == NULL )
+		return;
+	
+	Lists.Delete( wnd->referenceList );
+	DestroyWindow( GetHWND( wnd ) );
+	sbWnd_DeleteVScrollbarWindowInfo( wnd->specific );
+	free( wnd->dims );
+	free( wnd );
+}
 
 void sbWnd_DeleteTextboxInfo( SBTextboxInfo *info ) {
 	free( info->currentFont );
@@ -682,10 +736,6 @@ void sbWnd_DeleteProgressBarWindowInfo( SBProgressBarWindowInfo *info ) {
 	free( info );
 }
 
-void sbWnd_ProcessQueue( HWND hwnd ) {
-	MSG msg = { 0 };
-	while ( PeekMessageW( &msg, hwnd, 0, 0, PM_REMOVE ) ) {
-		TranslateMessage( &msg );
-		DispatchMessageW( &msg );
-	}
+void sbWnd_DeleteVScrollbarWindowInfo( SBVScrollbarWindowInfo *info ) {
+	free( info );
 }

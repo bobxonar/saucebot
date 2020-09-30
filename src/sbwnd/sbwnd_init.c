@@ -51,6 +51,11 @@ void initWindowFunctions( void ) {
 	SBProgressBarWindows.advance = advance_SbProgressBarWindow;
 	SBDldcmdMasterWindows.create = DldcmdMasterWindowCreator;
 	SBDldcmdMasterWindows.destroy = destroy_SbDldcmdMasterWindow;
+	SBVScrollbarWindows.create = VScrollbarWindowCreator;
+	SBVScrollbarWindows.destroy = destroy_SbVScrollbarWindow;
+	SBVScrollbarWindows.advance = advance_SbVScrollbarWindow;
+	SBVScrollbarWindows.retreat = retreat_SbVScrollbarWindow;
+	SBVScrollbarWindows.setMaxIncrement = setMaxIncrement_SbVScrollbarWindow;
 	SBWindows.setSignalFn = SetSignalFn_AllTypes;
 	SBWindows.appendReference = appendReference_AllTypes;
 	SBWindows.getReference = getReference_AllTypes;
@@ -103,7 +108,8 @@ void RegisterClasses( void ) {
 		viewmaster = { 0 },
 		string = { 0 },
 		progbar = { 0 },
-		dldmaster = { 0 };
+		dldmaster = { 0 },
+		vscrollbar = { 0 };
 
 	SbGUIMaster.WindowClassNameArray[ BASIC_WINDOW ] = L"basic";
 	SbGUIMaster.WindowClassNameArray[ TEXTBOX_WINDOW ] = L"textbox";
@@ -115,6 +121,7 @@ void RegisterClasses( void ) {
 	SbGUIMaster.WindowClassNameArray[ STRING_WINDOW ] = L"string";
 	SbGUIMaster.WindowClassNameArray[ PROGRESS_BAR_WINDOW ] = L"progbar";
 	SbGUIMaster.WindowClassNameArray[ DLDCMD_MASTER_WINDOW ] = L"dldmaster";
+	SbGUIMaster.WindowClassNameArray[ VSCROLLBAR_WINDOW ] = L"vscrollbar";
 
 	HBRUSH white = CreateSolidBrush( RGB( 0xFF, 0xFF, 0xFF ) );
 
@@ -205,6 +212,12 @@ void RegisterClasses( void ) {
 	dldmaster.hbrBackground = white;
 	dldmaster.cbWndExtra = sizeof( sbWnd * );
 
+	vscrollbar.cbSize = sizeof( WNDCLASSEXW );
+	vscrollbar.lpfnWndProc = VScrollbarProc;
+	vscrollbar.hInstance = inst;
+	vscrollbar.lpszClassName = SbGUIMaster.WindowClassNameArray[ VSCROLLBAR_WINDOW ];
+	vscrollbar.cbWndExtra = sizeof( sbWnd * );
+
 	RegisterClassExW( &basic );
 	RegisterClassExW( &txtbox );
 	RegisterClassExW( &text );
@@ -215,6 +228,7 @@ void RegisterClasses( void ) {
 	RegisterClassExW( &string );
 	RegisterClassExW( &progbar );
 	RegisterClassExW( &dldmaster );
+	RegisterClassExW( &vscrollbar );
 }
 
 void CreateTestWindow( void ) {

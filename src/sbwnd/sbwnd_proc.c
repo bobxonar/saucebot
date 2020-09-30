@@ -19,8 +19,8 @@
 // Background color for string windows while the mouse button is down
 #define STRWND_CLK_COLOR	(RGB(0xE0,0xE0,0xE0))
 
-LRESULT CALLBACK BasicWndProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam ) {
-	switch( msg ) {
+void sbWndCommonProc( HWND hwnd, UINT msg, LPARAM lParam ) {
+	switch ( msg ) {
 
 		case WM_CREATE: {
 			sbWnd *wnd = ( ( CREATESTRUCTW * )lParam )->lpCreateParams;
@@ -28,15 +28,23 @@ LRESULT CALLBACK BasicWndProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam
 			break;
 		}
 
-		case WM_LBUTTONDOWN:
-			SetFocus( hwnd );
-			break;
-
 		case WM_MOUSEMOVE: {
 			sbWnd *wnd = ( void * )GetWindowLongPtrW( hwnd, GWLP_USERDATA );
 			SbGUIMaster.currentCursorWnd = wnd;
 			break;
 		}
+
+	}
+	return;
+}
+
+LRESULT CALLBACK BasicWndProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam ) {
+	sbWndCommonProc( hwnd, msg, lParam );
+	switch( msg ) {
+
+		case WM_LBUTTONDOWN:
+			SetFocus( hwnd );
+			break;
 
 		case WM_ERASEBKGND: {
 			HDC dc = ( void * )wParam;
@@ -65,23 +73,12 @@ LRESULT CALLBACK BasicWndProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam
 }
 
 LRESULT CALLBACK TextboxProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam ) {
+	sbWndCommonProc( hwnd, msg, lParam );
 	switch( msg ) {
-
-		case WM_CREATE: {
-			sbWnd *wnd = ( ( CREATESTRUCTW * )lParam )->lpCreateParams;
-			SetWindowLongPtrW( hwnd, GWLP_USERDATA, ( LONG_PTR )wnd );
-			break;
-		}
 
 		case WM_LBUTTONDOWN:
 			SetFocus( hwnd );
 			break;
-
-		case WM_MOUSEMOVE: {
-			sbWnd *wnd = ( void * )GetWindowLongPtrW( hwnd, GWLP_USERDATA );
-			SbGUIMaster.currentCursorWnd = wnd;
-			break;
-		}
 
 		case WM_SETFOCUS: {
 			sbWnd *wnd = ( void * )GetWindowLongPtrW( hwnd, GWLP_USERDATA );
@@ -118,6 +115,10 @@ LRESULT CALLBACK TextboxProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam 
 					for ( size_t i = 0; i < wcslen( s ); i++ )
 						SendMessage( hwnd, WM_CHAR, s[i], 0 );
 					CloseClipboard( );
+					break;
+				}
+				case COPY: {
+					/* TODO */
 					break;
 				}
 			}
@@ -281,26 +282,15 @@ LRESULT CALLBACK TextboxProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam 
 }
 
 LRESULT CALLBACK TextWndProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam ) {
+	sbWndCommonProc( hwnd, msg, lParam );
 	switch( msg ) {
 		
-		case WM_CREATE: {
-			sbWnd *wnd = ( ( CREATESTRUCTW * )lParam )->lpCreateParams;
-			SetWindowLongPtrW( hwnd, GWLP_USERDATA, ( LONG_PTR )wnd );
-			break;
-		}
-
 		case WM_ERASEBKGND: {
 			HDC dc = ( void * )wParam;
 			RECT r = { 0 };
 			GetClientRect( hwnd, &r );
 			FillRect( dc, &r, GetStockObject( WHITE_BRUSH ) );
 			return 1;
-		}
-
-		case WM_MOUSEMOVE: {
-			sbWnd *wnd = ( void * )GetWindowLongPtrW( hwnd, GWLP_USERDATA );
-			SbGUIMaster.currentCursorWnd = wnd;
-			break;
 		}
 
 		case WM_PAINT: {
@@ -418,20 +408,9 @@ LRESULT CALLBACK TextWndProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam 
 }
 
 LRESULT CALLBACK ClickableProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam ) {
+	sbWndCommonProc( hwnd, msg, lParam );
 	switch( msg ) {
 		
-		case WM_CREATE: {
-			sbWnd *wnd = ( ( CREATESTRUCTW * )lParam )->lpCreateParams;
-			SetWindowLongPtrW( hwnd, GWLP_USERDATA, ( LONG_PTR )wnd );
-			break;
-		}
-
-		case WM_MOUSEMOVE: {
-			sbWnd *wnd = ( void * )GetWindowLongPtrW( hwnd, GWLP_USERDATA );
-			SbGUIMaster.currentCursorWnd = wnd;
-			break;
-		}
-
 		case WM_ERASEBKGND: {
 			HDC dc = ( void * )wParam;
 			RECT r = { 0 };
@@ -458,26 +437,15 @@ LRESULT CALLBACK ClickableProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPara
 }
 
 LRESULT CALLBACK RestrictedImageProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam ) {
+	sbWndCommonProc( hwnd, msg, lParam );
 	switch( msg ) {
 		
-		case WM_CREATE: {
-			sbWnd *wnd = ( ( CREATESTRUCTW * )lParam )->lpCreateParams;
-			SetWindowLongPtrW( hwnd, GWLP_USERDATA, ( LONG_PTR )wnd );
-			break;
-		}
-
 		case WM_ERASEBKGND: {
 			HDC dc = ( void * )wParam;
 			RECT r = { 0 };
 			GetClientRect( hwnd, &r );
 			FillRect( dc, &r, GetStockObject( WHITE_BRUSH ) );
 			return 1;
-		}
-
-		case WM_MOUSEMOVE: {
-			sbWnd *wnd = ( void * )GetWindowLongPtrW( hwnd, GWLP_USERDATA );
-			SbGUIMaster.currentCursorWnd = wnd;
-			break;
 		}
 
 		case WM_PAINT: {
@@ -529,23 +497,12 @@ LRESULT CALLBACK RestrictedImageProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM
 }
 
 LRESULT CALLBACK MasterProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam ) {
+	sbWndCommonProc( hwnd, msg, lParam );
 	switch( msg ) {
 		
-		case WM_CREATE: {
-			sbWnd *wnd = ( ( CREATESTRUCTW * )lParam )->lpCreateParams;
-			SetWindowLongPtrW( hwnd, GWLP_USERDATA, ( LONG_PTR )wnd );
-			break;
-		}
-
 		case WM_LBUTTONDOWN:
 			SetFocus( hwnd );
 			break;
-
-		case WM_MOUSEMOVE: {
-			sbWnd *wnd = ( void * )GetWindowLongPtrW( hwnd, GWLP_USERDATA );
-			SbGUIMaster.currentCursorWnd = wnd;
-			break;
-		}
 
 		case WM_ERASEBKGND: {
 			HDC dc = ( void * )wParam;
@@ -607,23 +564,12 @@ LRESULT CALLBACK MasterProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 }
 
 LRESULT CALLBACK ViewcmdMasterProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam ) {
+	sbWndCommonProc( hwnd, msg, lParam );
 	switch( msg ) {
 		
-		case WM_CREATE: {
-			sbWnd *wnd = ( ( CREATESTRUCTW * )lParam )->lpCreateParams;
-			SetWindowLongPtrW( hwnd, GWLP_USERDATA, ( LONG_PTR )wnd );
-			break;
-		}
-
 		case WM_LBUTTONDOWN:
 			SetFocus( hwnd );
 			break;
-
-		case WM_MOUSEMOVE: {
-			sbWnd *wnd = ( void * )GetWindowLongPtrW( hwnd, GWLP_USERDATA );
-			SbGUIMaster.currentCursorWnd = wnd;
-			break;
-		}
 
 		case WM_ERASEBKGND: {
 			HDC dc = ( void * )wParam;
@@ -667,14 +613,9 @@ LRESULT CALLBACK ViewcmdMasterProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM l
 }
 
 LRESULT CALLBACK StringProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam ) {
+	sbWndCommonProc( hwnd, msg, lParam );
 	switch( msg ) {
 		
-		case WM_CREATE: {
-			sbWnd *wnd = ( ( CREATESTRUCTW * )lParam )->lpCreateParams;
-			SetWindowLongPtrW( hwnd, GWLP_USERDATA, ( LONG_PTR )wnd );
-			break;
-		}
-
 		case WM_ERASEBKGND: {
 
 			sbWnd *wnd = ( void * )GetWindowLongPtrW( hwnd, GWLP_USERDATA );
@@ -751,7 +692,6 @@ LRESULT CALLBACK StringProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 		case WM_MOUSEMOVE: {
 			
 			sbWnd *wnd = ( void * )GetWindowLongPtrW( hwnd, GWLP_USERDATA );
-			SbGUIMaster.currentCursorWnd = wnd;
 			SBStringWindowInfo *info = GetSpecificHandle( wnd );
 
 			if ( !info->clickable )
@@ -823,20 +763,17 @@ LRESULT CALLBACK StringProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 }
 
 LRESULT CALLBACK ProgressBarProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam ) {
+	sbWndCommonProc( hwnd, msg, lParam );
 	switch ( msg ) {
+
+		case WM_ERASEBKGND: {
+			HDC dc = ( void * )wParam;
+			RECT r = { 0 };
+			GetClientRect( hwnd, &r );
+			FillRect( dc, &r, GetStockObject( WHITE_BRUSH ) );
+			return 1;
+		}
 		
-		case WM_CREATE: {
-			sbWnd *wnd = ( ( CREATESTRUCTW * )lParam )->lpCreateParams;
-			SetWindowLongPtrW( hwnd, GWLP_USERDATA, ( LONG_PTR )wnd );
-			break;
-		}
-
-		case WM_MOUSEMOVE: {
-			sbWnd *wnd = ( void * )GetWindowLongPtrW( hwnd, GWLP_USERDATA );
-			SbGUIMaster.currentCursorWnd = wnd;
-			break;
-		}
-
 		case WM_PAINT: {
 			
 			PAINTSTRUCT ps = { 0 };
@@ -856,12 +793,10 @@ LRESULT CALLBACK ProgressBarProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
 			break;
 		}
 
-		case WM_SIZE:
-			InvalidateRect( hwnd, NULL, TRUE );
-			break;
 		case WM_CLOSE:
 			DestroyWindow( hwnd );
 			break;
+
 		default:
 			return DefWindowProcW( hwnd, msg, wParam, lParam );
 
@@ -870,23 +805,12 @@ LRESULT CALLBACK ProgressBarProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
 }
 
 LRESULT CALLBACK DldcmdMasterProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam ) {
+	sbWndCommonProc( hwnd, msg, lParam );
 	switch( msg ) {
 		
-		case WM_CREATE: {
-			sbWnd *wnd = ( ( CREATESTRUCTW * )lParam )->lpCreateParams;
-			SetWindowLongPtrW( hwnd, GWLP_USERDATA, ( LONG_PTR )wnd );
-			break;
-		}
-
 		case WM_LBUTTONDOWN:
 			SetFocus( hwnd );
 			break;
-
-		case WM_MOUSEMOVE: {
-			sbWnd *wnd = ( void * )GetWindowLongPtrW( hwnd, GWLP_USERDATA );
-			SbGUIMaster.currentCursorWnd = wnd;
-			break;
-		}
 
 		case WM_ERASEBKGND: {
 			HDC dc = ( void * )wParam;
@@ -906,6 +830,77 @@ LRESULT CALLBACK DldcmdMasterProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lP
 
 		case WM_SIZE: {
 			EnumChildWindows( hwnd, ChildSizingProc, 0 );
+			break;
+		}
+
+		case WM_CLOSE:
+			DestroyWindow( hwnd );
+			break;
+
+		default:
+			return DefWindowProcW( hwnd, msg, wParam, lParam );
+
+	}
+	return 0;
+}
+
+LRESULT CALLBACK VScrollbarProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam ) {
+	sbWndCommonProc( hwnd, msg, lParam );
+	switch ( msg ) {
+
+		case WM_ERASEBKGND: {
+			HDC dc = ( void * )wParam;
+			RECT r = { 0 };
+			GetClientRect( hwnd, &r );
+			FillRect( dc, &r, GetStockObject( WHITE_BRUSH ) );
+			return 1;
+		}
+
+		case WM_PAINT: {
+
+			PAINTSTRUCT ps = { 0 };
+			HDC dc = BeginPaint( hwnd, &ps );
+
+			sbWnd *wnd = ( void * )GetWindowLongPtrW( hwnd, GWLP_USERDATA );
+			SBVScrollbarWindowInfo *info = GetSpecificHandle( wnd );
+			RECT r = { 0 };
+			GetClientRect( hwnd, &r );
+
+			HPEN prevPen = SelectObject(
+				dc,
+				CreatePen( PS_SOLID, 1, RGB( 0, 0, 0 ) )
+			);
+
+			int
+				len = info->incDist * info->maxInc + 2 + r.right,
+				x1 = r.right * 1/6 + 1,
+				x2 = r.right * 5/6 + 1,
+				bottom = len <= r.bottom
+				?	len
+				:	r.bottom;
+
+			MoveToEx( dc, x1, 1, NULL );
+			LineTo( dc, x2, 1 );
+			MoveToEx( dc, x1, ( bottom - 1 ), NULL );
+			LineTo( dc, x2, ( bottom - 1 ) );
+
+			int
+				maxDist = r.bottom - r.right - 1,
+				incLen = info->maxInc * info->incDist - 1,
+				dist = incLen <= maxDist
+					?	incLen + 1
+					:	info->cur * maxDist/info->maxInc + 1;
+
+			Rectangle(
+				dc,
+				0, dist,
+				r.right, dist + r.right
+			);
+
+			HPEN pen = SelectObject( dc, prevPen );
+			DeleteObject( pen );
+			EndPaint( hwnd, &ps );
+
 			break;
 		}
 

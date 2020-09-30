@@ -6,7 +6,6 @@
 
 sbWnd *CommonInfoCreator( HWND, const wString, uint8_t, sbWnd_Dims * );
 
-
 #define SB_DIMTYPE_IIII_TL		(0x00)
 #define SB_DIMTYPE_IIIF_TL		(0x01)
 #define SB_DIMTYPE_IIFI_TL		(0x02)
@@ -74,47 +73,73 @@ sbWnd *CommonInfoCreator( HWND, const wString, uint8_t, sbWnd_Dims * );
 
 void sbWndEvaluateDims( HWND, uint8_t, sbWnd_Dims *, dimension[4] );
 
-HWND BasicWindowHWNDCreator( HWND, const wString, uint8_t, sbWnd_Dims *, sbWnd * );
-HWND TextboxHWNDCreator( HWND, const wString, uint8_t, sbWnd_Dims *, sbWnd * );
-HWND BasicTextWindowHWNDCreator( HWND, const wString, uint8_t, sbWnd_Dims *, sbWnd * );
-HWND ClickableWindowHWNDCreator( HWND, const wString, uint8_t, sbWnd_Dims *, sbWnd * );
-HWND RestrictedImageWindowHWNDCreator( HWND, const wString, uint8_t, sbWnd_Dims *, sbWnd * );
-HWND MasterWindowHWNDCreator( HWND, const wString, uint8_t, sbWnd_Dims *, sbWnd * );
-HWND ViewcmdMasterWindowHWNDCreator( HWND, const wString, uint8_t, sbWnd_Dims *, sbWnd * );
-HWND StringWindowHWNDCreator( HWND, const wString, uint8_t, sbWnd_Dims *, sbWnd * );
-HWND ProgressBarWindowHWNDCreator( HWND, const wString, uint8_t, sbWnd_Dims *, sbWnd * );
-HWND DldcmdMasterWindowHWNDCreator( HWND, const wString, uint8_t, sbWnd_Dims *, sbWnd * );
+HWND
+	BasicWindowHWNDCreator( HWND, const wString, uint8_t, sbWnd_Dims *, sbWnd * ),
+	TextboxHWNDCreator( HWND, const wString, uint8_t, sbWnd_Dims *, sbWnd * ),
+
+	BasicTextWindowHWNDCreator( HWND, const wString, uint8_t, sbWnd_Dims *, sbWnd * ),
+	ClickableWindowHWNDCreator( HWND, const wString, uint8_t, sbWnd_Dims *, sbWnd * ),
+
+	RestrictedImageWindowHWNDCreator( HWND, const wString, uint8_t, sbWnd_Dims *, sbWnd * ),
+	MasterWindowHWNDCreator( HWND, const wString, uint8_t, sbWnd_Dims *, sbWnd * ),
+
+	ViewcmdMasterWindowHWNDCreator( HWND, const wString, uint8_t, sbWnd_Dims *, sbWnd * ),
+	StringWindowHWNDCreator( HWND, const wString, uint8_t, sbWnd_Dims *, sbWnd * ),
+
+	ProgressBarWindowHWNDCreator( HWND, const wString, uint8_t, sbWnd_Dims *, sbWnd * ),
+	DldcmdMasterWindowHWNDCreator( HWND, const wString, uint8_t, sbWnd_Dims *, sbWnd * ),
+
+	VScrollbarWindowHWNDCreator( HWND, const wString, uint8_t, sbWnd_Dims *, sbWnd * );
 
 
-sbWnd *BasicWindowCreator( HWND, const wString, uint8_t, sbWnd_Dims * );
-sbWnd *TextboxCreator( HWND, const wString, uint8_t, sbWnd_Dims *, int );
-sbWnd *BasicTextWindowCreator( HWND, const wString, uint8_t, sbWnd_Dims *, uint16_t );
-sbWnd *ClickableWindowCreator( HWND, const wString, uint8_t, sbWnd_Dims * );
-sbWnd *RestrictedImageWindowCreator( HWND, const wString, uint8_t, sbWnd_Dims *, const wString );
-sbWnd *MasterWindowCreator( HWND, const wString, uint8_t, sbWnd_Dims * );
-sbWnd *ViewcmdMasterWindowCreator( HWND, const wString, uint8_t, sbWnd_Dims * );
-sbWnd *StringWindowCreator( HWND, const wString, uint8_t, sbWnd_Dims *, const wString, uint16_t, int );
-sbWnd *ProgressBarWindowCreator( HWND, const wString, uint8_t, sbWnd_Dims *, uint16_t );
-sbWnd *DldcmdMasterWindowCreator( HWND, const wString, uint8_t, sbWnd_Dims * );
+sbWnd
+	*BasicWindowCreator( HWND, const wString, uint8_t, sbWnd_Dims * ),
+	*TextboxCreator( HWND, const wString, uint8_t, sbWnd_Dims *, int ),
+
+	*BasicTextWindowCreator( HWND, const wString, uint8_t, sbWnd_Dims *, uint16_t ),
+	*ClickableWindowCreator( HWND, const wString, uint8_t, sbWnd_Dims * ),
+
+	*RestrictedImageWindowCreator( HWND, const wString, uint8_t, sbWnd_Dims *, const wString ),
+	*MasterWindowCreator( HWND, const wString, uint8_t, sbWnd_Dims * ),
+
+	*ViewcmdMasterWindowCreator( HWND, const wString, uint8_t, sbWnd_Dims * ),
+	*StringWindowCreator( HWND, const wString, uint8_t, sbWnd_Dims *, const wString, uint16_t, int ),
+
+	*ProgressBarWindowCreator( HWND, const wString, uint8_t, sbWnd_Dims *, uint16_t ),
+	*DldcmdMasterWindowCreator( HWND, const wString, uint8_t, sbWnd_Dims * ),
+
+	*VScrollbarWindowCreator( HWND, const wString, uint8_t, sbWnd_Dims *, uint16_t );
 
 
-void destroy_SbBasicWindow( sbWnd * );
-void destroy_SbTextbox( sbWnd * );
-void destroy_SbBasicTextWindow( sbWnd * );
-void destroy_SbClickableWindow( sbWnd * );
-void destroy_SbRestrictedImageWindow( sbWnd * );
-void destroy_SbMasterWindow( sbWnd * );
-void destroy_SbViewcmdMasterWindow( sbWnd * );
-void destroy_SbStringWindow( sbWnd * );
-void destroy_SbProgressBarWindow( sbWnd * );
-void destroy_SbDldcmdMasterWindow( sbWnd * );
+void
+	destroy_SbBasicWindow( sbWnd * ),
+	destroy_SbTextbox( sbWnd * ),
 
-void sbWnd_DeleteTextboxInfo( SBTextboxInfo * );
-void sbWnd_DeleteBasicTextWindowInfo( SBBasicTextWindowInfo * );
-void sbWnd_DeleteClickableWindowInfo( SBClickableWindowInfo * );
-void sbWnd_DeleteRestrictedImageWindowInfo( SBRestrictedImageWindowInfo * );
-void sbWnd_DeleteStringWindowInfo( SBStringWindowInfo * );
-void sbWnd_DeleteProgressBarWindowInfo( SBProgressBarWindowInfo * );
+	destroy_SbBasicTextWindow( sbWnd * ),
+	destroy_SbClickableWindow( sbWnd * ),
+
+	destroy_SbRestrictedImageWindow( sbWnd * ),
+	destroy_SbMasterWindow( sbWnd * ),
+
+	destroy_SbViewcmdMasterWindow( sbWnd * ),
+	destroy_SbStringWindow( sbWnd * ),
+
+	destroy_SbProgressBarWindow( sbWnd * ),
+	destroy_SbDldcmdMasterWindow( sbWnd * ),
+
+	destroy_SbVScrollbarWindow( sbWnd * );
+
+void
+	sbWnd_DeleteTextboxInfo( SBTextboxInfo * ),
+	sbWnd_DeleteBasicTextWindowInfo( SBBasicTextWindowInfo * ),
+
+	sbWnd_DeleteClickableWindowInfo( SBClickableWindowInfo * ),
+	sbWnd_DeleteRestrictedImageWindowInfo( SBRestrictedImageWindowInfo * ),
+
+	sbWnd_DeleteStringWindowInfo( SBStringWindowInfo * ),
+	sbWnd_DeleteProgressBarWindowInfo( SBProgressBarWindowInfo * ),
+
+	sbWnd_DeleteVScrollbarWindowInfo( SBVScrollbarWindowInfo * );
 
 SBTextboxInfo *TextboxInfoCreator( HWND, int );
 SBBasicTextWindowInfo *BasicTextWindowInfoCreator( HWND, uint16_t );
@@ -122,7 +147,6 @@ SBClickableWindowInfo *ClickableWindowInfoCreator( void );
 SBRestrictedImageWindowInfo *RestrictedImageWindowInfoCreator( HWND, const wString );
 SBStringWindowInfo *StringWindowInfoCreator( const wString, uint16_t, int );
 SBProgressBarWindowInfo *ProgressBarWindowInfoCreator( uint16_t );
-
-void sbWnd_ProcessQueue( HWND );
+SBVScrollbarWindowInfo *VScrollbarWindowInfoCreator( uint16_t );
 
 #endif

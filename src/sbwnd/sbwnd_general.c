@@ -210,5 +210,32 @@ void advance_SbProgressBarWindow( PROGBARWND sbWnd *wnd ) {
 	SBProgressBarWindowInfo *info = GetSpecificHandle( wnd );
 	info->cur += info->cur < info->total ? 1 : 0;
 	InvalidateRect( GetHWND( wnd ), NULL, FALSE );
-	UpdateWindow( GetHWND( wnd ) );
+	return;
+}
+
+void advance_SbVScrollbarWindow( VSCROLLWND sbWnd *wnd ) {
+	SBVScrollbarWindowInfo *info = GetSpecificHandle( wnd );
+	info->cur += info->cur >= info->maxInc
+	?	0
+	:	1;
+	InvalidateRect( wnd->hwnd, NULL, TRUE );
+	return;
+}
+
+void retreat_SbVScrollbarWindow( VSCROLLWND sbWnd *wnd ) {
+	SBVScrollbarWindowInfo *info = GetSpecificHandle( wnd );
+	info->cur -= info->cur <= 0
+	?	0
+	:	1;
+	InvalidateRect( wnd->hwnd, NULL, TRUE );
+	return;
+}
+
+void setMaxIncrement_SbVScrollbarWindow( VSCROLLWND sbWnd *wnd, uint16_t max ) {
+	SBVScrollbarWindowInfo *info = GetSpecificHandle( wnd );
+	info->maxInc = max;
+	if ( info->cur > max )
+		info->cur = info->maxInc;
+	InvalidateRect( wnd->hwnd, NULL, TRUE );
+	return;
 }

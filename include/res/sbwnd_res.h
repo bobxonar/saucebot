@@ -8,6 +8,7 @@
 
 #define LARGE_BACK      0x10
 #define PASTE           0x11
+#define COPY            0x12
 
 #define MENU_ONE    0x02
 
