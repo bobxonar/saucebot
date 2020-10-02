@@ -145,8 +145,6 @@ LRESULT CALLBACK TextboxProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam 
 			SBTextboxInfo *info = GetSpecificHandle( wnd );
 			UpdateTextboxInfo( wnd );
 
-			InvalidateRect( hwnd, NULL, TRUE );
-
 			if ( GetFocus( ) == hwnd ) {
 				CreateCaret( hwnd, NULL, 0, info->currentFont->lfHeight );
 				SetCaretPos( info->currentCaretPosition, 1 );
@@ -338,17 +336,9 @@ LRESULT CALLBACK TextWndProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam 
 
 			SetWindowOrgEx( dc, 0, info->currentOffset, NULL );
 			int th = DrawTextExW( dc, finArr, -1, &r, DT_EXPANDTABS | DT_WORDBREAK, NULL );
+
 			info->lineCount = th / info->fontSize;
-			
-			int
-				extraLines = info->lineCount - info->currentMaxLines,
-				extraInc = extraLines / 3 + 1;
-
-			int curInc = SBVScrollbarWindows.getMaxIncrement( info->scrollbar );
-			if ( extraInc != curInc )
-				SBVScrollbarWindows.setMaxIncrement( info->scrollbar, extraInc );
-
-			
+			UpdateTextWndScrollbarInfo( info, NULL );
 
 			SelectObject( dc, prevBrush );
 			SelectObject( dc, prevFont );
@@ -387,9 +377,7 @@ LRESULT CALLBACK TextWndProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam 
 				int cOff = info->currentOffset;
 
 				cOff -= ( 3 * info->fontSize );
-				cOff = cOff < 0
-				?	0
-				:	cOff;
+				cOff = cOff < 0 ? 0 : cOff;
 
 				info->currentOffset = cOff;
 
@@ -402,6 +390,7 @@ LRESULT CALLBACK TextWndProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam 
 		}
 
 		case WM_SIZE: {
+
 			RECT r = { 0 };
 			GetClientRect( hwnd, &r );
 
@@ -411,44 +400,9 @@ LRESULT CALLBACK TextWndProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam 
 			if ( info == NULL )
 				break;
 
-			int
-				cOff = info->currentOffset,
-				oldMax = info->currentMaxLines,
-				newMax = r.bottom / info->fontSize;
+			info->currentMaxLines = r.bottom / info->fontSize;
+			UpdateTextWndScrollbarInfo( info, &r );
 
-			if ( newMax > oldMax )
-				cOff -= ( newMax - oldMax ) * info->fontSize;
-
-			cOff = cOff < 0
-			?	0
-			:	cOff;
-
-			info->currentMaxLines = newMax;
-
-			if (
-				SBVScrollbarWindows.getCurrentPos( info->scrollbar )
-				== SBVScrollbarWindows.getMaxIncrement( info->scrollbar )
-			)
-				info->currentOffset = cOff;
-
-
-			SBVScrollbarWindows.setPos( info->scrollbar, ( cOff / 3 ) );
-
-			int
-				extraLines = info->lineCount - info->currentMaxLines,
-				extraInc = extraLines / 3 + 1;
-
-			int curInc = SBVScrollbarWindows.getMaxIncrement( info->scrollbar );
-			if ( extraInc != curInc )
-				SBVScrollbarWindows.setMaxIncrement( info->scrollbar, extraInc );
-			
-			if ( info->currentMaxLines < info->lineCount )
-				SBWindows.show( info->scrollbar );
-			else {
-				SBWindows.hide( info->scrollbar );
-				SBVScrollbarWindows.reset( info->scrollbar );
-			}
-			
 			break;
 		}
 
@@ -464,13 +418,6 @@ LRESULT CALLBACK TextWndProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam 
 			sbWnd *wnd = ( void * )GetWindowLongPtrW( hwnd, GWLP_USERDATA );
 			SBBasicTextWindowInfo *info = GetSpecificHandle( wnd );
 			Lists.Add( info->text, ( void * )wParam );
-
-			if ( info->currentMaxLines < info->lineCount )
-				SBWindows.show( info->scrollbar );
-			else {
-				SBWindows.hide( info->scrollbar );
-				SBVScrollbarWindows.reset( info->scrollbar );
-			}
 
 			InvalidateRect( hwnd, NULL, FALSE );
 
@@ -754,7 +701,6 @@ LRESULT CALLBACK StringProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 			SBWindows.changeDims( wnd, wnd->dimType, &newSize );
 
 			InvalidateRect( hwnd, NULL, TRUE );
-
 			break;
 		}
 
@@ -791,9 +737,6 @@ LRESULT CALLBACK StringProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 			InvalidateRect( hwnd, NULL, TRUE );
 			break;
 		}
-
-		case WM_MOUSEHOVER:
-			break; // Perhaps add hover functionality in the future
 
 		case WM_LBUTTONDOWN: {
 			sbWnd *wnd = ( void * )GetWindowLongPtrW( hwnd, GWLP_USERDATA );
@@ -994,8 +937,48 @@ void DoubleWStringCapacity( SBTextboxInfo *info ) {
 	info->tiedown = dblStr;
 }
 
-BOOL CALLBACK ChildSizingProc( IN HWND hwnd, IN LPARAM lParam ) {
+void UpdateTextWndScrollbarInfo( SBBasicTextWindowInfo *info, RECT *wndr ) {
+	// Setting max increment
+	int exLines = ( int )info->lineCount - ( int )info->currentMaxLines;
 
+	if ( exLines <= 0 && info->currentOffset == 0 ) {
+		SBVScrollbarWindows.reset( info->scrollbar );
+		SBWindows.hide( info->scrollbar );
+		return;
+	}
+	SBWindows.show( info->scrollbar );
+
+	int nMaxInc = ( exLines - 1 ) / 3 + 1;
+	if (
+		SBVScrollbarWindows.getMaxIncrement( info->scrollbar )
+		!= nMaxInc
+	)
+		SBVScrollbarWindows.setMaxIncrement( info->scrollbar, nMaxInc );
+
+	if ( wndr == NULL )
+		return;
+
+	// Setting position--only happens if rectangle is provided (window is resized)
+	int
+		frameTop = info->currentOffset / info->fontSize, // Last line offscreen
+		frameBottom = frameTop + info->currentMaxLines;
+
+	if (
+		frameBottom >= info->lineCount
+		&& info->currentMaxLines > info->prevMaxLines
+		&& frameBottom >= ( info->lineCount + 3 )
+	)
+		info->currentOffset -= 3 * info->fontSize;
+
+	info->prevMaxLines = info->currentMaxLines;
+
+	if ( info->currentOffset == 0 ) {
+		SBWindows.hide( info->scrollbar );
+	}
+	return;
+}
+
+BOOL CALLBACK ChildSizingProc( IN HWND hwnd, IN LPARAM lParam ) {
 	sbWnd *wnd = ( void * )GetWindowLongPtrW( hwnd, GWLP_USERDATA );
 
 	dimension finDims[4] = { 0 };

@@ -165,6 +165,7 @@ typedef struct basictextinfo {
 	uint16_t
 		currentOffset,
 		currentMaxLines,
+		prevMaxLines,
 		lineCount,
 		fontSize;
 

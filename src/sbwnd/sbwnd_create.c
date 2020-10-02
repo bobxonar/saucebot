@@ -526,6 +526,8 @@ SBBasicTextWindowInfo *BasicTextWindowInfoCreator( HWND hwnd, uint16_t fontSize 
 	GetClientRect( hwnd, &r );
 
 	fin->currentMaxLines = r.bottom / fontSize;
+	fin->prevMaxLines = fin->currentMaxLines;
+	
 	int h = r.bottom - r.top;
 	fin->currentFont->lfHeight = fin->fontSize;
 

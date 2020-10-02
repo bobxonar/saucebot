@@ -32,7 +32,8 @@ LRESULT CALLBACK
 void
 	UpdateTiedown( SBTextboxInfo *, wchar_t ),
 	UpdateTextboxInfo( sbWnd * ),
-	ResetTextboxInfo( SBTextboxInfo * );
+	ResetTextboxInfo( SBTextboxInfo * ),
+	UpdateTextWndScrollbarInfo( SBBasicTextWindowInfo *, RECT * );
 
 void DoubleWStringCapacity( SBTextboxInfo * );
 

@@ -243,6 +243,7 @@ void reset_SbVScrollbarWindow( VSCROLLWND sbWnd *wnd ) {
 
 	SBVScrollbarWindowInfo *info = GetSpecificHandle( wnd );
 	info->cur = 0;
+	info->maxInc = 1;
 
 	InvalidateRect( wnd->hwnd, NULL, TRUE );
 	return;
