@@ -214,6 +214,9 @@ void advance_SbProgressBarWindow( PROGBARWND sbWnd *wnd ) {
 }
 
 void advance_SbVScrollbarWindow( VSCROLLWND sbWnd *wnd ) {
+	if ( wnd->type != VSCROLLBAR_WINDOW )
+		return;
+
 	SBVScrollbarWindowInfo *info = GetSpecificHandle( wnd );
 	info->cur += info->cur >= info->maxInc
 	?	0
@@ -223,6 +226,9 @@ void advance_SbVScrollbarWindow( VSCROLLWND sbWnd *wnd ) {
 }
 
 void retreat_SbVScrollbarWindow( VSCROLLWND sbWnd *wnd ) {
+	if ( wnd->type != VSCROLLBAR_WINDOW )
+		return;
+
 	SBVScrollbarWindowInfo *info = GetSpecificHandle( wnd );
 	info->cur -= info->cur <= 0
 	?	0
@@ -231,11 +237,54 @@ void retreat_SbVScrollbarWindow( VSCROLLWND sbWnd *wnd ) {
 	return;
 }
 
+void reset_SbVScrollbarWindow( VSCROLLWND sbWnd *wnd ) {
+	if ( wnd->type != VSCROLLBAR_WINDOW )
+		return;
+
+	SBVScrollbarWindowInfo *info = GetSpecificHandle( wnd );
+	info->cur = 0;
+
+	InvalidateRect( wnd->hwnd, NULL, TRUE );
+	return;
+}
+
+void setPos_SbVScrollbarWindow( VSCROLLWND sbWnd *wnd, uint16_t pos ) {
+	if ( wnd->type != VSCROLLBAR_WINDOW )
+		return;
+
+	SBVScrollbarWindowInfo *info = GetSpecificHandle( wnd );
+	if ( pos > info->maxInc )
+		return;
+
+	info->cur = pos;
+	InvalidateRect( wnd->hwnd, NULL, TRUE );
+	return;
+}
+
 void setMaxIncrement_SbVScrollbarWindow( VSCROLLWND sbWnd *wnd, uint16_t max ) {
+	if ( wnd->type != VSCROLLBAR_WINDOW )
+		return;
+
 	SBVScrollbarWindowInfo *info = GetSpecificHandle( wnd );
 	info->maxInc = max;
 	if ( info->cur > max )
 		info->cur = info->maxInc;
 	InvalidateRect( wnd->hwnd, NULL, TRUE );
 	return;
+}
+
+int getMaxIncrement_SbVScrollbarWindow( VSCROLLWND sbWnd *wnd ) {
+	if ( wnd->type != VSCROLLBAR_WINDOW )
+		return 0;
+
+	SBVScrollbarWindowInfo *info = GetSpecificHandle( wnd );
+	return info->maxInc;
+}
+
+int getCurrentPos_SbVScrollbarWindow( VSCROLLWND sbWnd *wnd ) {
+	if ( wnd->type != VSCROLLBAR_WINDOW )
+		return 0;
+
+	SBVScrollbarWindowInfo *info = GetSpecificHandle( wnd );
+	return info->cur;
 }

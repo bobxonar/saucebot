@@ -16,7 +16,7 @@ bin/saucebot.exe : obj/saucebot.o obj/sb_ds.o obj/sb_eng.o obj/sb_file.o obj/sb_
 	gcc -o bin/saucebot.exe obj/saucebot.o obj/sb_ds.o obj/sb_eng.o obj/sb_file.o obj/sb_init.o obj/sb_net.o obj/sb_proc.o obj/sb_rand.o \
 				   			obj/sbwnd_init.o obj/sbwnd_create.o obj/sbwnd_general.o obj/sbwnd_proc.o res/sbwnd_res.o $(LIBS)
 
-obj/saucebot.o : src/main/saucebot.c
+obj/saucebot.o : src/main/saucebot.c $(headers)
 	gcc -c -g -o obj/saucebot.o src/main/saucebot.c $(CFLAGS)
 
 obj/sb_ds.o : src/sb2/sb_ds.c $(headers)

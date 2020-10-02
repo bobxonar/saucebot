@@ -5,7 +5,7 @@
 
 #include "sbwnd_general.h"
 
-void sbWndCommonProc( HWND, UINT, LPARAM );
+int sbWndCommonProc( HWND, UINT, WPARAM, LPARAM );
 
 LRESULT CALLBACK
 	BasicWndProc( HWND, UINT, WPARAM, LPARAM ),

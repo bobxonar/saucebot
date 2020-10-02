@@ -19,7 +19,7 @@
 // Background color for string windows while the mouse button is down
 #define STRWND_CLK_COLOR	(RGB(0xE0,0xE0,0xE0))
 
-void sbWndCommonProc( HWND hwnd, UINT msg, LPARAM lParam ) {
+int sbWndCommonProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam ) {
 	switch ( msg ) {
 
 		case WM_CREATE: {
@@ -34,12 +34,30 @@ void sbWndCommonProc( HWND hwnd, UINT msg, LPARAM lParam ) {
 			break;
 		}
 
+		case WM_MOUSEWHEEL: {
+			sbWnd *wnd = ( void * )GetWindowLongPtrW( hwnd, GWLP_USERDATA );
+			if ( SbGUIMaster.currentCursorWnd == wnd )
+				return 0;
+			PostMessageW( GetHWND( SbGUIMaster.currentCursorWnd ), msg, wParam, lParam );
+			break;
+		}
+
+		case WM_SIZE:
+			EnumChildWindows( hwnd, ChildSizingProc, 0 );
+			break;
+
+		case WM_CLOSE:
+			DestroyWindow( hwnd );
+			break;
+
+		default:
+			return DefWindowProcW( hwnd, msg, wParam, lParam );
+
 	}
-	return;
+	return 0;
 }
 
 LRESULT CALLBACK BasicWndProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam ) {
-	sbWndCommonProc( hwnd, msg, lParam );
 	switch( msg ) {
 
 		case WM_LBUTTONDOWN:
@@ -62,18 +80,11 @@ LRESULT CALLBACK BasicWndProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam
 			break;
 		}
 
-		case WM_CLOSE:
-			DestroyWindow( hwnd );
-			break;
-
-		default:
-			return DefWindowProcW( hwnd, msg, wParam, lParam );
 	}
-	return 0;
+	return sbWndCommonProc( hwnd, msg, wParam, lParam );
 }
 
 LRESULT CALLBACK TextboxProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam ) {
-	sbWndCommonProc( hwnd, msg, lParam );
 	switch( msg ) {
 
 		case WM_LBUTTONDOWN:
@@ -270,19 +281,11 @@ LRESULT CALLBACK TextboxProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam 
 			break;
 		}
 
-		case WM_CLOSE:
-			DestroyWindow( hwnd );
-			break;
-
-		default:
-			return DefWindowProcW( hwnd, msg, wParam, lParam );
-
 	}
-	return 0;
+	return sbWndCommonProc( hwnd, msg, wParam, lParam );
 }
 
 LRESULT CALLBACK TextWndProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam ) {
-	sbWndCommonProc( hwnd, msg, lParam );
 	switch( msg ) {
 		
 		case WM_ERASEBKGND: {
@@ -294,15 +297,7 @@ LRESULT CALLBACK TextWndProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam 
 		}
 
 		case WM_PAINT: {
-
-			LARGE_INTEGER
-				st = { 0 },
-				ed = { 0 },
-				frq = { 0 };
-			QueryPerformanceFrequency( &frq );
-			QueryPerformanceCounter( &st );
 			
-			// Rendering text. Now featuring wrapping!
 			PAINTSTRUCT ps = { 0 };
 			HDC dc = BeginPaint( hwnd, &ps );
 
@@ -317,23 +312,43 @@ LRESULT CALLBACK TextWndProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam 
 			HBRUSH prevBrush = SelectObject( dc, brush );
 			HFONT prevFont = SelectObject( dc, font );
 
-			RECT r = { 0 };
+			RECT
+				r = { 0 },
+				wndr = { 0 };
 			GetClientRect( hwnd, &r );
+			GetClientRect( hwnd, &wndr );
 			r.left++;
+			r.right -= 11;
+			r.bottom = LONG_MAX;
 
-			// New method for drawing text that is more consistent,
-			// but not all that much faster than calling DrawTextExW so many times.
 			wchar_t
 				finArr[ 32768 ] = { 0 },
 				*finArrPtr = finArr;
+			int chLeft = 32767;
 
 			for ( uint16_t i = 0; i < Lists.Size( text ); ++i ) {
 				wString str = Lists.Get( text, i );
-				int chprint = swprintf( finArrPtr, 32767, L"%s\n", str );
+				int chprint = swprintf( finArrPtr, chLeft, L"%s\n", str );
 				finArrPtr += chprint;
+				chLeft -= chprint;
 			}
 
-			DrawTextExW( dc, finArr, -1, &r, DT_EXPANDTABS | DT_WORDBREAK, NULL );
+			if ( finArrPtr != finArr && finArrPtr[-1] == '\n' )
+				finArrPtr[-1] = 0;
+
+			SetWindowOrgEx( dc, 0, info->currentOffset, NULL );
+			int th = DrawTextExW( dc, finArr, -1, &r, DT_EXPANDTABS | DT_WORDBREAK, NULL );
+			info->lineCount = th / info->fontSize;
+			
+			int
+				extraLines = info->lineCount - info->currentMaxLines,
+				extraInc = extraLines / 3 + 1;
+
+			int curInc = SBVScrollbarWindows.getMaxIncrement( info->scrollbar );
+			if ( extraInc != curInc )
+				SBVScrollbarWindows.setMaxIncrement( info->scrollbar, extraInc );
+
+			
 
 			SelectObject( dc, prevBrush );
 			SelectObject( dc, prevFont );
@@ -341,18 +356,101 @@ LRESULT CALLBACK TextWndProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam 
 			DeleteObject( font );
 
 			EndPaint( hwnd, &ps );
-
-			QueryPerformanceCounter( &ed );
-			double
-				t = ( double )ed.QuadPart - ( double )st.QuadPart,
-				cts = ( double )frq.QuadPart;
-
 			break;
 		}
 
-		case WM_SIZE:
-			EnumChildWindows( hwnd, ChildSizingProc, 0 );
+		case WM_MOUSEWHEEL: {
+			int16_t rotate = HIWORD( wParam );
+			int rot32 = ( int )rotate / WHEEL_DELTA; // eat my ass windows
+
+			sbWnd *wnd = ( void * )GetWindowLongPtrW( hwnd, GWLP_USERDATA );
+			SBBasicTextWindowInfo *info = GetSpecificHandle( wnd );
+
+			if ( info->lineCount <= info->currentMaxLines )
+				break;
+
+			if ( rot32 < 0 ) {
+
+				int cur = SBVScrollbarWindows.getCurrentPos( info->scrollbar );
+				SBVScrollbarWindows.advance( info->scrollbar );
+
+				if ( SBVScrollbarWindows.getCurrentPos( info->scrollbar ) != cur ) {
+					info->currentOffset += info->fontSize * 3;
+					InvalidateRect( hwnd, NULL, TRUE );
+				}
+
+			} else if ( rot32 > 0 ) {
+
+				int cur = SBVScrollbarWindows.getCurrentPos( info->scrollbar );
+				SBVScrollbarWindows.retreat( info->scrollbar );
+
+				int cOff = info->currentOffset;
+
+				cOff -= ( 3 * info->fontSize );
+				cOff = cOff < 0
+				?	0
+				:	cOff;
+
+				info->currentOffset = cOff;
+
+				if ( SBVScrollbarWindows.getCurrentPos( info->scrollbar ) != cur )
+					InvalidateRect( hwnd, NULL, TRUE );
+
+			}
+			
 			break;
+		}
+
+		case WM_SIZE: {
+			RECT r = { 0 };
+			GetClientRect( hwnd, &r );
+
+			sbWnd *wnd = ( void *)GetWindowLongPtrW( hwnd, GWLP_USERDATA );
+			SBBasicTextWindowInfo *info = GetSpecificHandle( wnd );
+
+			if ( info == NULL )
+				break;
+
+			int
+				cOff = info->currentOffset,
+				oldMax = info->currentMaxLines,
+				newMax = r.bottom / info->fontSize;
+
+			if ( newMax > oldMax )
+				cOff -= ( newMax - oldMax ) * info->fontSize;
+
+			cOff = cOff < 0
+			?	0
+			:	cOff;
+
+			info->currentMaxLines = newMax;
+
+			if (
+				SBVScrollbarWindows.getCurrentPos( info->scrollbar )
+				== SBVScrollbarWindows.getMaxIncrement( info->scrollbar )
+			)
+				info->currentOffset = cOff;
+
+
+			SBVScrollbarWindows.setPos( info->scrollbar, ( cOff / 3 ) );
+
+			int
+				extraLines = info->lineCount - info->currentMaxLines,
+				extraInc = extraLines / 3 + 1;
+
+			int curInc = SBVScrollbarWindows.getMaxIncrement( info->scrollbar );
+			if ( extraInc != curInc )
+				SBVScrollbarWindows.setMaxIncrement( info->scrollbar, extraInc );
+			
+			if ( info->currentMaxLines < info->lineCount )
+				SBWindows.show( info->scrollbar );
+			else {
+				SBWindows.hide( info->scrollbar );
+				SBVScrollbarWindows.reset( info->scrollbar );
+			}
+			
+			break;
+		}
 
 		case WM_LBUTTONDOWN: {
 			sbWnd *wnd = ( void * )GetWindowLongPtrW( hwnd, GWLP_USERDATA );
@@ -367,6 +465,13 @@ LRESULT CALLBACK TextWndProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam 
 			SBBasicTextWindowInfo *info = GetSpecificHandle( wnd );
 			Lists.Add( info->text, ( void * )wParam );
 
+			if ( info->currentMaxLines < info->lineCount )
+				SBWindows.show( info->scrollbar );
+			else {
+				SBWindows.hide( info->scrollbar );
+				SBVScrollbarWindows.reset( info->scrollbar );
+			}
+
 			InvalidateRect( hwnd, NULL, FALSE );
 
 			break;
@@ -378,6 +483,9 @@ LRESULT CALLBACK TextWndProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam 
 			SBBasicTextWindowInfo *info = GetSpecificHandle( wnd );
 			Lists.Delete( info->text );
 			info->text = Lists.New( );
+
+			SBVScrollbarWindows.reset( info->scrollbar );
+			SBWindows.hide( info->scrollbar );
 
 			InvalidateRect( hwnd, NULL, TRUE );
 
@@ -397,18 +505,11 @@ LRESULT CALLBACK TextWndProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam 
 			break;
 		}
 
-		case WM_CLOSE:
-			DestroyWindow( hwnd );
-			break;
-
-		default:
-			return DefWindowProcW( hwnd, msg, wParam, lParam );
 	}
-	return 0;
+	return sbWndCommonProc( hwnd, msg, wParam, lParam );
 }
 
 LRESULT CALLBACK ClickableProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam ) {
-	sbWndCommonProc( hwnd, msg, lParam );
 	switch( msg ) {
 		
 		case WM_ERASEBKGND: {
@@ -427,17 +528,11 @@ LRESULT CALLBACK ClickableProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPara
 			break;
 		}
 
-		case WM_CLOSE:
-			DestroyWindow( hwnd );
-			break;
-		default:
-			return DefWindowProcW( hwnd, msg, wParam, lParam );
 	}
-	return 0;
+	return sbWndCommonProc( hwnd, msg, wParam, lParam );
 }
 
 LRESULT CALLBACK RestrictedImageProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam ) {
-	sbWndCommonProc( hwnd, msg, lParam );
 	switch( msg ) {
 		
 		case WM_ERASEBKGND: {
@@ -486,18 +581,11 @@ LRESULT CALLBACK RestrictedImageProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM
 			break;
 		}
 
-		case WM_CLOSE:
-			DestroyWindow( hwnd );
-			break;
-
-		default:
-			return DefWindowProcW( hwnd, msg, wParam, lParam );
 	}
-	return 0;
+	return sbWndCommonProc( hwnd, msg, wParam, lParam );
 }
 
 LRESULT CALLBACK MasterProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam ) {
-	sbWndCommonProc( hwnd, msg, lParam );
 	switch( msg ) {
 		
 		case WM_LBUTTONDOWN:
@@ -520,12 +608,6 @@ LRESULT CALLBACK MasterProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 			break;
 		}
 
-		case WM_SIZE:
-			EnumChildWindows( hwnd, ChildSizingProc, 0 );
-			break;
-		case WM_ACTIVATE:
-			SetFocus( hwnd );
-			break;
 		case WM_COMMAND: {
 
 			if ( HIWORD( wParam ) != 0 ) {
@@ -551,20 +633,16 @@ LRESULT CALLBACK MasterProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 			}
 			break;
 		}
-		case WM_CLOSE:
-			DestroyWindow( hwnd );
-			break;
+
 		case WM_DESTROY:
 			PostQuitMessage( 0 ); // THERE CAN ONLY BE ONE--DO NOT MAKE MORE THAN ONE MASTER WINDOW, ELSE SUFFER.
 			break;
-		default:
-			return DefWindowProcW( hwnd, msg, wParam, lParam );
+
 	}
-	return 0;
+	return sbWndCommonProc( hwnd, msg, wParam, lParam );
 }
 
 LRESULT CALLBACK ViewcmdMasterProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam ) {
-	sbWndCommonProc( hwnd, msg, lParam );
 	switch( msg ) {
 		
 		case WM_LBUTTONDOWN:
@@ -587,10 +665,6 @@ LRESULT CALLBACK ViewcmdMasterProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM l
 			break;
 		}
 
-		case WM_SIZE:
-			EnumChildWindows( hwnd, ChildSizingProc, 0 );
-			break;
-
 		case WM_CHAR: {
 			sbWnd *wnd = ( void * )GetWindowLongPtrW( hwnd, GWLP_USERDATA );
 			switch( wParam ) {
@@ -603,17 +677,12 @@ LRESULT CALLBACK ViewcmdMasterProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM l
 			}
 			break;
 		}
-		case WM_CLOSE:
-			DestroyWindow( hwnd );
-			break;
-		default:
-			return DefWindowProcW( hwnd, msg, wParam, lParam );
+
 	}
-	return 0;
+	return sbWndCommonProc( hwnd, msg, wParam, lParam );
 }
 
 LRESULT CALLBACK StringProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam ) {
-	sbWndCommonProc( hwnd, msg, lParam );
 	switch( msg ) {
 		
 		case WM_ERASEBKGND: {
@@ -753,17 +822,11 @@ LRESULT CALLBACK StringProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 			break;
 		}
 
-		case WM_CLOSE:
-			DestroyWindow( hwnd );
-			break;
-		default:
-			return DefWindowProcW( hwnd, msg, wParam, lParam );
 	}
-	return 0;
+	return sbWndCommonProc( hwnd, msg, wParam, lParam );
 }
 
 LRESULT CALLBACK ProgressBarProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam ) {
-	sbWndCommonProc( hwnd, msg, lParam );
 	switch ( msg ) {
 
 		case WM_ERASEBKGND: {
@@ -793,19 +856,11 @@ LRESULT CALLBACK ProgressBarProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
 			break;
 		}
 
-		case WM_CLOSE:
-			DestroyWindow( hwnd );
-			break;
-
-		default:
-			return DefWindowProcW( hwnd, msg, wParam, lParam );
-
 	}
-	return 0;
+	return sbWndCommonProc( hwnd, msg, wParam, lParam );
 }
 
 LRESULT CALLBACK DldcmdMasterProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam ) {
-	sbWndCommonProc( hwnd, msg, lParam );
 	switch( msg ) {
 		
 		case WM_LBUTTONDOWN:
@@ -828,24 +883,11 @@ LRESULT CALLBACK DldcmdMasterProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lP
 			break;
 		}
 
-		case WM_SIZE: {
-			EnumChildWindows( hwnd, ChildSizingProc, 0 );
-			break;
-		}
-
-		case WM_CLOSE:
-			DestroyWindow( hwnd );
-			break;
-
-		default:
-			return DefWindowProcW( hwnd, msg, wParam, lParam );
-
 	}
-	return 0;
+	return sbWndCommonProc( hwnd, msg, wParam, lParam );
 }
 
 LRESULT CALLBACK VScrollbarProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam ) {
-	sbWndCommonProc( hwnd, msg, lParam );
 	switch ( msg ) {
 
 		case WM_ERASEBKGND: {
@@ -876,20 +918,20 @@ LRESULT CALLBACK VScrollbarProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
 				x1 = r.right * 1/6 + 1,
 				x2 = r.right * 5/6 + 1,
 				bottom = len <= r.bottom
-				?	len
-				:	r.bottom;
+					?	len
+					:	r.bottom - 2;
 
 			MoveToEx( dc, x1, 1, NULL );
 			LineTo( dc, x2, 1 );
-			MoveToEx( dc, x1, ( bottom - 1 ), NULL );
-			LineTo( dc, x2, ( bottom - 1 ) );
+			MoveToEx( dc, x1, bottom, NULL );
+			LineTo( dc, x2, bottom );
 
 			int
-				maxDist = r.bottom - r.right - 1,
+				maxDist = r.bottom - r.right - 4,
 				incLen = info->maxInc * info->incDist - 1,
 				dist = incLen <= maxDist
-					?	incLen + 1
-					:	info->cur * maxDist/info->maxInc + 1;
+					?	info->cur * info->incDist + 2
+					:	info->cur * maxDist/info->maxInc + 2;
 
 			Rectangle(
 				dc,
@@ -899,20 +941,13 @@ LRESULT CALLBACK VScrollbarProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
 
 			HPEN pen = SelectObject( dc, prevPen );
 			DeleteObject( pen );
-			EndPaint( hwnd, &ps );
 
+			EndPaint( hwnd, &ps );
 			break;
 		}
 
-		case WM_CLOSE:
-			DestroyWindow( hwnd );
-			break;
-
-		default:
-			return DefWindowProcW( hwnd, msg, wParam, lParam );
-
 	}
-	return 0;
+	return sbWndCommonProc( hwnd, msg, wParam, lParam );
 }
 
 void UpdateTiedown( SBTextboxInfo *info, wchar_t val ) {
@@ -962,10 +997,9 @@ void DoubleWStringCapacity( SBTextboxInfo *info ) {
 BOOL CALLBACK ChildSizingProc( IN HWND hwnd, IN LPARAM lParam ) {
 
 	sbWnd *wnd = ( void * )GetWindowLongPtrW( hwnd, GWLP_USERDATA );
-	dimension finDims[4] = { 0 };
-	HWND parent = GetParent( hwnd );
 
-	sbWndEvaluateDims( parent, wnd->dimType, wnd->dims, finDims );
+	dimension finDims[4] = { 0 };
+	sbWndEvaluateDims( wnd->parent, wnd->dimType, wnd->dims, finDims );
 
 	MoveWindow( hwnd, finDims[0], finDims[1], finDims[2], finDims[3], TRUE );
 	return 1;

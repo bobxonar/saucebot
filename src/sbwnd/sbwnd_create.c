@@ -207,7 +207,7 @@ HWND MasterWindowHWNDCreator( HWND parent, const wString name, uint8_t dimType, 
 		WS_EX_COMPOSITED,
 		SbGUIMaster.WindowClassNameArray[ MASTER_WINDOW ],
 		name,
-		WS_OVERLAPPEDWINDOW,
+		WS_OVERLAPPEDWINDOW | WS_CLIPCHILDREN,
 		finDims[0], finDims[1], finDims[2], finDims[3],
 		parent,
 		NULL,
@@ -226,7 +226,7 @@ HWND ViewcmdMasterWindowHWNDCreator( HWND parent, const wString name, uint8_t di
 	sbWndEvaluateDims( parent, dimType, dims, finDims );
 	
 	return CreateWindowExW(
-		WS_EX_TOPMOST,
+		0,
 		SbGUIMaster.WindowClassNameArray[ VIEWCMD_MASTER_WINDOW ],
 		name,
 		style,
@@ -521,12 +521,28 @@ SBBasicTextWindowInfo *BasicTextWindowInfoCreator( HWND hwnd, uint16_t fontSize 
 	fin->currentFont = newptr( LOGFONTW );
 	memcpy( fin->currentFont, SbGUIMaster.currentFont, sizeof( LOGFONTW ) );
 	fin->fontSize = fontSize;
+
 	RECT r = { 0 };
 	GetClientRect( hwnd, &r );
+
+	fin->currentMaxLines = r.bottom / fontSize;
 	int h = r.bottom - r.top;
 	fin->currentFont->lfHeight = fin->fontSize;
-	
-	fin->currentLine = 0;
+
+	sbWnd_Dims dims = { 0 };
+	dims.intDims[0] = 1;
+	dims.intDims[2] = 11;
+	dims.floatDims[3] = 1.0f;
+	SBWindows.setCreateMode( SBWND_CREATEMODE_HIDE );
+	fin->scrollbar = SBVScrollbarWindows.create(
+		hwnd,
+		L"vscrollbar-textwnd",
+		SB_DIMTYPE_IIIF_TR,
+		&dims,
+		15
+	);
+	SBWindows.setCreateMode( SBWND_CREATEMODE_SHOW );
+
 	return fin;
 }
 

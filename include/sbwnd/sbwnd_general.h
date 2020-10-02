@@ -160,13 +160,14 @@ typedef struct basictextinfo {
 	// A list that holds lines of text. It is seperated into lines, each node of the list contains one line of text.
 	sbList *text;
 
+	sbWnd *scrollbar;
+
 	uint16_t
-	// Current line to draw to of the text window.
-		currentLine,
-	// Font size of the window.
+		currentOffset,
+		currentMaxLines,
+		lineCount,
 		fontSize;
 
-	// Current window font.
 	LOGFONTW *currentFont;
 
 } SBBasicTextWindowInfo;
@@ -343,7 +344,13 @@ typedef struct {
 			( *destroy )( VSCROLLWND sbWnd * ),
 			( *advance )( VSCROLLWND sbWnd * ),
 			( *retreat )( VSCROLLWND sbWnd * ),
+			( *reset )( VSCROLLWND sbWnd * ),
+			( *setPos )( VSCROLLWND sbWnd *, uint16_t ),
 			( *setMaxIncrement )( VSCROLLWND sbWnd *, uint16_t );
+
+		int
+			( *getMaxIncrement )( VSCROLLWND sbWnd * ),
+			( *getCurrentPos )( VSCROLLWND sbWnd * );
 
 	} SBVScrollbarWindow;
 
@@ -456,6 +463,12 @@ VSCROLLWND
 void
 	advance_SbVScrollbarWindow( VSCROLLWND sbWnd * ),
 	retreat_SbVScrollbarWindow( VSCROLLWND sbWnd * ),
+	reset_SbVScrollbarWindow( VSCROLLWND sbWnd * ),
+	setPos_SbVScrollbarWindow( VSCROLLWND sbWnd *, uint16_t ),
 	setMaxIncrement_SbVScrollbarWindow( VSCROLLWND sbWnd *, uint16_t );
+
+int
+	getMaxIncrement_SbVScrollbarWindow( VSCROLLWND sbWnd * ),
+	getCurrentPos_SbVScrollbarWindow( VSCROLLWND sbWnd * );
 
 #endif

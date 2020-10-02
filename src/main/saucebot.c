@@ -79,17 +79,6 @@ int WINAPI WinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
 	moreDims.intDims[1] = 0;
 	sbWnd *fourth = SBBasicTextWindows.create( GetHWND( first ), L"basicwnd-1", SB_DIMTYPE_IIFF_TL, &moreDims, 15 );
 
-	moreDims.intDims[2] = 11;
-	moreDims.floatDims[3] = 1.0f;
-	sbWnd *fifth = SBVScrollbarWindows.create(
-		GetHWND( fourth ),
-		L"bro",
-		SB_DIMTYPE_IIIF_TR,
-		&moreDims,
-		30
-	);
-	SBVScrollbarWindows.setMaxIncrement( fifth, 18 );
-
 	SBWindows.setSignalFn( second, sbEntry );
 	SBWindows.appendReference( second, fourth );
 	SBWindows.appendReference( second, third );

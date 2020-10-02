@@ -56,6 +56,10 @@ void initWindowFunctions( void ) {
 	SBVScrollbarWindows.advance = advance_SbVScrollbarWindow;
 	SBVScrollbarWindows.retreat = retreat_SbVScrollbarWindow;
 	SBVScrollbarWindows.setMaxIncrement = setMaxIncrement_SbVScrollbarWindow;
+	SBVScrollbarWindows.getMaxIncrement = getMaxIncrement_SbVScrollbarWindow;
+	SBVScrollbarWindows.getCurrentPos = getCurrentPos_SbVScrollbarWindow;
+	SBVScrollbarWindows.reset = reset_SbVScrollbarWindow;
+	SBVScrollbarWindows.setPos = setPos_SbVScrollbarWindow;
 	SBWindows.setSignalFn = SetSignalFn_AllTypes;
 	SBWindows.appendReference = appendReference_AllTypes;
 	SBWindows.getReference = getReference_AllTypes;
