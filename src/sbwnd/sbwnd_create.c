@@ -207,7 +207,7 @@ HWND MasterWindowHWNDCreator( HWND parent, const wString name, uint8_t dimType, 
 		WS_EX_COMPOSITED,
 		SbGUIMaster.WindowClassNameArray[ MASTER_WINDOW ],
 		name,
-		WS_OVERLAPPEDWINDOW | WS_CLIPCHILDREN,
+		WS_OVERLAPPEDWINDOW,
 		finDims[0], finDims[1], finDims[2], finDims[3],
 		parent,
 		NULL,
@@ -527,7 +527,7 @@ SBBasicTextWindowInfo *BasicTextWindowInfoCreator( HWND hwnd, uint16_t fontSize 
 
 	fin->currentMaxLines = r.bottom / fontSize;
 	fin->prevMaxLines = fin->currentMaxLines;
-	
+
 	int h = r.bottom - r.top;
 	fin->currentFont->lfHeight = fin->fontSize;
 

@@ -1265,7 +1265,7 @@ void CreateDynamicWindows_SbCommand_Download_Ses( sbCmd_Download_Session *ses ) 
 		dims.intDims[0] = 0;
 		dims.floatDims[1] = SB_CENTER_DIM( 0.45f );
 		dims.floatDims[2] = 0.5f;
-		dims.floatDims[3] = 0.725f;
+		dims.floatDims[3] = 0.75f;
 
 		wchar_t path[ MAX_PATH ] = { 0 };
 		swprintf( path, MAX_PATH, L"Covers\\%s\\cover.jpg", n );
@@ -1306,30 +1306,30 @@ void CreateDynamicWindows_SbCommand_Download_Ses( sbCmd_Download_Session *ses ) 
 
 		// Progress string
 		dims.floatDims[0] = SB_CENTER_DIM( 0.5f );
-		dims.floatDims[1] = SB_CENTER_DIM( 0.85f );
+		dims.intDims[1] = 50;
 		dims.intDims[2] = 0;
 		dims.intDims[3] = 0;
 
 		progStr = SBStringWindows.create(
 			GetHWND( top ),
 			L"progStr",
-			SB_DIMTYPE_FFII_TL,
+			SB_DIMTYPE_FIII_BL,
 			&dims,
 			L"Progress",
 			15,
-			0
+			1
 		);
 
 		// Progress bar
 		dims.floatDims[0] = SB_CENTER_DIM( 0.5f );
-		dims.floatDims[1] = 0.9f;
+		dims.intDims[1] = 25;
 		dims.floatDims[2] = 0.8f;
 		dims.intDims[3] = 18;
 
 		progBar = SBProgressBarWindows.create(
 			GetHWND( top ),
 			L"progBar",
-			SB_DIMTYPE_FFFI_TL,
+			SB_DIMTYPE_FIFI_BL,
 			&dims,
 			dld->tPgs
 		);

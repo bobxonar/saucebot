@@ -285,7 +285,7 @@ LRESULT CALLBACK TextboxProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam 
 
 LRESULT CALLBACK TextWndProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam ) {
 	switch( msg ) {
-		
+
 		case WM_ERASEBKGND: {
 			HDC dc = ( void * )wParam;
 			RECT r = { 0 };
@@ -534,6 +534,10 @@ LRESULT CALLBACK RestrictedImageProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM
 
 LRESULT CALLBACK MasterProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam ) {
 	switch( msg ) {
+
+		case WM_CREATE:
+			SetLayeredWindowAttributes( hwnd, 0, 255, LWA_ALPHA );
+			break;
 		
 		case WM_LBUTTONDOWN:
 			SetFocus( hwnd );
