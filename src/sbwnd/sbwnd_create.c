@@ -405,7 +405,7 @@ sbWnd *MasterWindowCreator( HWND parent, const wString name, uint8_t dimType, sb
 
 	fin->type = MASTER_WINDOW;
 	if ( SbGUIMaster.createMode )
-		ShowWindow( fin->hwnd, SW_SHOW );
+		ShowWindow( fin->hwnd, SW_SHOWNORMAL );
 	SbGUIMaster.masterWnd = fin;
 	return fin;
 }

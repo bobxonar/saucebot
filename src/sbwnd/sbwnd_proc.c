@@ -433,6 +433,7 @@ LRESULT CALLBACK TextWndProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam 
 
 			SBVScrollbarWindows.reset( info->scrollbar );
 			SBWindows.hide( info->scrollbar );
+			info->currentOffset = 0;
 
 			InvalidateRect( hwnd, NULL, TRUE );
 
@@ -535,10 +536,6 @@ LRESULT CALLBACK RestrictedImageProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM
 LRESULT CALLBACK MasterProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam ) {
 	switch( msg ) {
 
-		case WM_CREATE:
-			SetLayeredWindowAttributes( hwnd, 0, 255, LWA_ALPHA );
-			break;
-		
 		case WM_LBUTTONDOWN:
 			SetFocus( hwnd );
 			break;

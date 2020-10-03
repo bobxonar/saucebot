@@ -30,7 +30,7 @@ void msgloop( void ) {
 	HWND mwnd = GetHWND( SbGUIMaster.masterWnd );
 	MSG msg = { 0 };
 	while ( ( GetMessageW( &msg, mwnd, 0, 0 ) ) > 0 ) {
-		if ( !TranslateAcceleratorW( mwnd , SbGUIMaster.sbAccelTable, &msg ) ) {
+		if ( !TranslateAcceleratorW( mwnd, SbGUIMaster.sbAccelTable, &msg ) ) {
 			TranslateMessage( &msg );
 			DispatchMessageW( &msg );
 		}
@@ -152,11 +152,22 @@ void setCreateMode_AllTypes( uint8_t type ) {
 }
 
 void show_AllTypes( GENERICWND sbWnd *wnd ) {
-	ShowWindow( wnd->hwnd, SW_SHOW );
+	if ( IsWindowVisible( wnd->hwnd ) )
+		return;
+
+	// The correct way to show a window.
+	LONG_PTR attrib = GetWindowLongPtrW( wnd->hwnd, GWL_STYLE );
+	attrib |= WS_VISIBLE;
+	SetWindowLongPtrW( wnd->hwnd, GWL_STYLE, attrib );
 }
 
 void hide_AllTypes( GENERICWND sbWnd *wnd ) {
-	ShowWindow( wnd->hwnd, SW_HIDE );
+	if ( !IsWindowVisible( wnd->hwnd ) )
+		return;
+
+	LONG_PTR attrib = GetWindowLongPtrW( wnd->hwnd, GWL_STYLE );
+	attrib &= ~WS_VISIBLE;
+	SetWindowLongPtrW( wnd->hwnd, GWL_STYLE, attrib );
 }
 
 wString getString_SbTextbox( TBOX sbWnd *wnd ) {
@@ -221,7 +232,7 @@ void advance_SbVScrollbarWindow( VSCROLLWND sbWnd *wnd ) {
 	info->cur += info->cur >= info->maxInc
 	?	0
 	:	1;
-	InvalidateRect( wnd->hwnd, NULL, TRUE );
+	InvalidateRect( wnd->hwnd, NULL, FALSE );
 	return;
 }
 
@@ -233,7 +244,7 @@ void retreat_SbVScrollbarWindow( VSCROLLWND sbWnd *wnd ) {
 	info->cur -= info->cur <= 0
 	?	0
 	:	1;
-	InvalidateRect( wnd->hwnd, NULL, TRUE );
+	InvalidateRect( wnd->hwnd, NULL, FALSE );
 	return;
 }
 
@@ -270,7 +281,7 @@ void setMaxIncrement_SbVScrollbarWindow( VSCROLLWND sbWnd *wnd, uint16_t max ) {
 	info->maxInc = max;
 	if ( info->cur > max )
 		info->cur = info->maxInc;
-	InvalidateRect( wnd->hwnd, NULL, TRUE );
+	InvalidateRect( wnd->hwnd, NULL, FALSE );
 	return;
 }
 
