@@ -152,8 +152,6 @@ typedef struct {
 
 		void ( *remDupNumbers )( sbList * );
 
-		void ( *updateWindows )( sbCmd_Download_Session * );
-
 		void ( *showWindows )( sbCmd_Download_Session * );
 
 	} DldCmd;
@@ -236,7 +234,6 @@ void finish_SbEngine_PDownload( void * );
 
 wchar_t *getPermDldPath_SbEngine_DldCmd( void );
 void remDupNumbers_SbEngine_DldCmd( sbList * );
-void updateWindows_SbEngine_DldCmd( sbCmd_Download_Session * );
 void showWindows_SbEngine_DldCmd( sbCmd_Download_Session * );
 
 sbCmd_Download_Session *Begin_SbCommand_Download_Ses( sbWnd *, sbList * );

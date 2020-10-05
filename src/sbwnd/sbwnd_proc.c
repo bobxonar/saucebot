@@ -310,11 +310,8 @@ LRESULT CALLBACK TextWndProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam 
 			HBRUSH prevBrush = SelectObject( dc, brush );
 			HFONT prevFont = SelectObject( dc, font );
 
-			RECT
-				r = { 0 },
-				wndr = { 0 };
+			RECT r = { 0 };
 			GetClientRect( hwnd, &r );
-			GetClientRect( hwnd, &wndr );
 			r.left++;
 			r.right -= 11;
 			r.bottom = LONG_MAX;
@@ -375,7 +372,6 @@ LRESULT CALLBACK TextWndProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam 
 				SBVScrollbarWindows.retreat( info->scrollbar );
 
 				int cOff = info->currentOffset;
-
 				cOff -= ( 3 * info->fontSize );
 				cOff = cOff < 0 ? 0 : cOff;
 
@@ -383,7 +379,6 @@ LRESULT CALLBACK TextWndProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam 
 
 				if ( SBVScrollbarWindows.getCurrentPos( info->scrollbar ) != cur )
 					InvalidateRect( hwnd, NULL, TRUE );
-
 			}
 			
 			break;
@@ -432,7 +427,7 @@ LRESULT CALLBACK TextWndProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam 
 			info->text = Lists.New( );
 
 			SBVScrollbarWindows.reset( info->scrollbar );
-			SBWindows.hide( info->scrollbar );
+			SBWindows.hide( info->scrollbar, 1 );
 			info->currentOffset = 0;
 
 			InvalidateRect( hwnd, NULL, TRUE );
@@ -944,10 +939,10 @@ void UpdateTextWndScrollbarInfo( SBBasicTextWindowInfo *info, RECT *wndr ) {
 
 	if ( exLines <= 0 && info->currentOffset == 0 ) {
 		SBVScrollbarWindows.reset( info->scrollbar );
-		SBWindows.hide( info->scrollbar );
+		SBWindows.hide( info->scrollbar, 0 );
 		return;
 	}
-	SBWindows.show( info->scrollbar );
+	SBWindows.show( info->scrollbar, 0 );
 
 	int nMaxInc = ( exLines - 1 ) / 3 + 1;
 	if (
@@ -962,7 +957,7 @@ void UpdateTextWndScrollbarInfo( SBBasicTextWindowInfo *info, RECT *wndr ) {
 	// Setting position--only happens if rectangle is provided (window is resized)
 	int
 		frameTop = info->currentOffset / info->fontSize, // Last line offscreen
-		frameBottom = frameTop + info->currentMaxLines;
+		frameBottom = frameTop + info->currentMaxLines; // Last possible line on screen
 
 	if (
 		frameBottom >= info->lineCount
@@ -972,10 +967,6 @@ void UpdateTextWndScrollbarInfo( SBBasicTextWindowInfo *info, RECT *wndr ) {
 		info->currentOffset -= 3 * info->fontSize;
 
 	info->prevMaxLines = info->currentMaxLines;
-
-	if ( info->currentOffset == 0 ) {
-		SBWindows.hide( info->scrollbar );
-	}
 	return;
 }
 
@@ -985,7 +976,14 @@ BOOL CALLBACK ChildSizingProc( IN HWND hwnd, IN LPARAM lParam ) {
 	dimension finDims[4] = { 0 };
 	sbWndEvaluateDims( wnd->parent, wnd->dimType, wnd->dims, finDims );
 
-	MoveWindow( hwnd, finDims[0], finDims[1], finDims[2], finDims[3], TRUE );
+	SetWindowPos(
+		hwnd, 0,
+		finDims[0],
+		finDims[1],
+		finDims[2],
+		finDims[3],
+		SWP_NOZORDER
+	);
 	return 1;
 }
 

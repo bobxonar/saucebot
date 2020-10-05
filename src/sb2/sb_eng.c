@@ -51,7 +51,6 @@ void initEngine( void ) {
 
 	EngineOps.DldCmd.getPermDldPath = getPermDldPath_SbEngine_DldCmd;
 	EngineOps.DldCmd.remDupNumbers = remDupNumbers_SbEngine_DldCmd;
-	EngineOps.DldCmd.updateWindows = updateWindows_SbEngine_DldCmd;
 	EngineOps.DldCmd.showWindows = showWindows_SbEngine_DldCmd;
 
 	PDownloads.create = create_SbEngine_PDownload;
@@ -531,7 +530,7 @@ void updateWindows_SbEngine_NumCmd( sbCmd_Number_Session *ses ) {
 	sbList *windowList = ses->windows[ ses->idx ];
 	for ( uint16_t i = 0; i < Lists.Size( windowList ); ++i ) {
 		sbWnd *wnd = Lists.Get( windowList, i );
-		SBWindows.show( wnd );
+		SBWindows.show( wnd, 1 );
 
 		wchar_t name[ 256 ] = { 0 };
 		GetWindowTextW( GetHWND( wnd ), name, 256 );
@@ -645,9 +644,9 @@ void showWindows_SbEngine_NumCmd( sbCmd_Number_Session *ses ) {
 	for ( uint16_t i = 0; i < Lists.Size( ses->numList ); ++i )
 		for ( uint16_t j = 0; j < Lists.Size( ses->windows[i] ); ++j ) {
 			if ( i != ses->idx )
-				SBWindows.hide( Lists.Get( ses->windows[i], j ) );
+				SBWindows.hide( Lists.Get( ses->windows[i], j ), 1 );
 			else
-				SBWindows.show( Lists.Get( ses->windows[i], j ) );
+				SBWindows.show( Lists.Get( ses->windows[i], j ), 1 );
 		}
 }
 
@@ -830,7 +829,7 @@ void sbCmd_Download( sbWnd *viewer, sbWnd *logger, wchar_t *text ) {
 		Commands.Download.Ses.StartPermDownloads( ses );
 	}
 
-	EngineOps.DldCmd.updateWindows( ses );
+	EngineOps.DldCmd.showWindows( ses );
 	
 	return;
 }
@@ -858,7 +857,7 @@ void StorePath_SbCommand_Download( sbWnd *tbox, void *text ) {
 				invalid,
 				L"Drive letter is invalid, enter a different drive letter."
 			);
-			SBWindows.show( invalid );
+			SBWindows.show( invalid, 1 );
 			return;
 		case 2: {
 			wchar_t msg[ MAX_PATH + 64 ] = { 0 };
@@ -869,7 +868,7 @@ void StorePath_SbCommand_Download( sbWnd *tbox, void *text ) {
 				( wchar_t * )text
 			);
 			SBStringWindows.changeString( invalid, msg );
-			SBWindows.show( invalid );
+			SBWindows.show( invalid, 1 );
 			return;
 		}
 	}
@@ -920,19 +919,14 @@ void remDupNumbers_SbEngine_DldCmd( sbList *nlist ) {
 	free( ppath );
 }
 
-void updateWindows_SbEngine_DldCmd( sbCmd_Download_Session *ses ) {
-	sbList *wndl = ses->windows[ ses->idx ];
-	for ( uint16_t i = 0; i < Lists.Size( wndl ); ++i )
-		SBWindows.show( Lists.Get( wndl, i ) );
-}
-
 void showWindows_SbEngine_DldCmd( sbCmd_Download_Session *ses ) {
 	for ( uint16_t i = 0; i < Lists.Size( ses->numList ); ++i )
 		for ( uint16_t j = 0; j < Lists.Size( ses->windows[i] ); ++j ) {
+			sbWnd *w = Lists.Get( ses->windows[i], j );
 			if ( i != ses->idx )
-				SBWindows.hide( Lists.Get( ses->windows[i], j ) );
+				SBWindows.hide( w, 0 );
 			else
-				SBWindows.show( Lists.Get( ses->windows[i], j ) );
+				SBWindows.show( w, 0 );
 		}
 }
 
@@ -1088,8 +1082,11 @@ void finish_SbEngine_PDownload( void *data ) { // Used with _beginthread() ONLY!
 		wchar_t newStr[48] = { 0 };
 		swprintf( newStr, 48, L"Downloading: %u of %u ~ Number %s", ( i + 1 ), dld->tPgs, dld->number );
 
+		// Remember to sync your painting operations when you use multithreading.
 		SBStringWindows.changeString( progressString, wcsdup( newStr ) );
+		SBWindows.update( progressString );
 		SBProgressBarWindows.advance( progressBar );
+		SBWindows.update( progressBar );
 		
 	}
 }
@@ -1317,7 +1314,7 @@ void CreateDynamicWindows_SbCommand_Download_Ses( sbCmd_Download_Session *ses ) 
 			&dims,
 			L"Progress",
 			15,
-			1
+			0
 		);
 
 		// Progress bar
@@ -1474,7 +1471,7 @@ void sbCmd_Chconf( sbWnd *viewer, sbWnd *logger, wchar_t *text ) {
 		);
 
 		// Permanant download path textbox
-		dims.intDims[0] = 0;
+		dims.intDims[0] = 1;
 		dims.floatDims[2] = 0.7f;
 		dims.intDims[3] = 19;
 		pdldTbox = SBTextboxes.create(
@@ -1551,7 +1548,7 @@ void Confirm_SbCmd_Chconf( sbWnd *button, void *unused ) {
 				emsg,
 				L"Drive letter is invalid, enter a different drive letter."
 			);
-			SBWindows.show( emsg );
+			SBWindows.show( emsg, 1 );
 			return;
 		case 2: {
 			wchar_t msg[ MAX_PATH + 64 ] = { 0 };
@@ -1562,7 +1559,7 @@ void Confirm_SbCmd_Chconf( sbWnd *button, void *unused ) {
 				( wchar_t * )path
 			);
 			SBStringWindows.changeString( emsg, msg );
-			SBWindows.show( emsg );
+			SBWindows.show( emsg, 1 );
 			return;
 		}
 	}

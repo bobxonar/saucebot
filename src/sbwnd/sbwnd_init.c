@@ -75,6 +75,7 @@ void initWindowFunctions( void ) {
 	SBWindows.setCreateMode = setCreateMode_AllTypes;
 	SBWindows.show = show_AllTypes;
 	SBWindows.hide = hide_AllTypes;
+	SBWindows.update = update_AllTypes;
 }
 
 void SetUpSbGUIMaster( void ) {

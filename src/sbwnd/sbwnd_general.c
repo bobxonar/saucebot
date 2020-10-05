@@ -151,23 +151,41 @@ void setCreateMode_AllTypes( uint8_t type ) {
 	SbGUIMaster.createMode = type;
 }
 
-void show_AllTypes( GENERICWND sbWnd *wnd ) {
+void show_AllTypes( GENERICWND sbWnd *wnd, int opt ) {
 	if ( IsWindowVisible( wnd->hwnd ) )
 		return;
 
-	// The correct way to show a window.
+	// This showing method makes sure IsWindowVisible works.
 	LONG_PTR attrib = GetWindowLongPtrW( wnd->hwnd, GWL_STYLE );
 	attrib |= WS_VISIBLE;
 	SetWindowLongPtrW( wnd->hwnd, GWL_STYLE, attrib );
+	RedrawWindow( wnd->hwnd, NULL, NULL, RDW_INVALIDATE | RDW_FRAME );
+
+	if ( opt )
+		UpdateWindow( wnd->hwnd );
+
+	return;
 }
 
-void hide_AllTypes( GENERICWND sbWnd *wnd ) {
+void hide_AllTypes( GENERICWND sbWnd *wnd, int opt ) {
 	if ( !IsWindowVisible( wnd->hwnd ) )
 		return;
 
+	// This hiding method makes sure IsWindowVisible works.
 	LONG_PTR attrib = GetWindowLongPtrW( wnd->hwnd, GWL_STYLE );
 	attrib &= ~WS_VISIBLE;
 	SetWindowLongPtrW( wnd->hwnd, GWL_STYLE, attrib );
+	InvalidateRect( wnd->parent, NULL, TRUE );
+
+	if ( opt )
+		UpdateWindow( wnd->parent );
+
+	return;
+}
+
+void update_AllTypes( GENERICWND sbWnd *wnd ) {
+	if ( IsWindowVisible( wnd->hwnd ) )
+		UpdateWindow( wnd->hwnd );
 }
 
 wString getString_SbTextbox( TBOX sbWnd *wnd ) {
@@ -203,7 +221,6 @@ void updateImage_SbRestrictedImageWindow( RSTIMGWND sbWnd *wnd, const wString pa
 	sbWnd_DeleteRestrictedImageWindowInfo( info );
 	wnd->specific = RestrictedImageWindowInfoCreator( GetHWND( wnd ), path );
 	InvalidateRect( GetHWND( wnd ), NULL, TRUE );
-	UpdateWindow( GetHWND( wnd ) );
 }
 
 void changeString_SbStringWindow( STRWND sbWnd *wnd, const wString str ) {

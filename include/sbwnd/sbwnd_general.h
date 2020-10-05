@@ -370,9 +370,17 @@ typedef struct {
 	
 	void ( *setCreateMode )( uint8_t );
 
-	void ( *show )( sbWnd * );
+	// Shows a window. The second parameter should be a nonzero value
+	// unless you are showing a window because of resizing, in which
+	// case it should be 0.
+	void ( *show )( sbWnd *, int );
 
-	void ( *hide )( sbWnd * );	
+	// Hides a window. The second parameter should be a nonzero value
+	// unless you are hiding a window because of resizing, in which
+	// case it should be 0.
+	void ( *hide )( sbWnd *, int );
+
+	void ( *update )( GENERICWND sbWnd * );
 
 	void ( *getDims )( sbWnd *, uint8_t *, sbWnd_Dims * );
 
@@ -427,8 +435,9 @@ uint16_t getID_AllTypes( GENERICWND sbWnd * );
 uint16_t getType_AllTypes( GENERICWND sbWnd * );
 
 void setCreateMode_AllTypes( uint8_t );
-void show_AllTypes( GENERICWND sbWnd * );
-void hide_AllTypes( GENERICWND sbWnd * );
+void show_AllTypes( GENERICWND sbWnd *, int );
+void hide_AllTypes( GENERICWND sbWnd *, int );
+void update_AllTypes( GENERICWND sbWnd * );
 void changeDims_AllTypes( GENERICWND sbWnd *, uint8_t, sbWnd_Dims * );
 void toSurface_AllTypes( GENERICWND sbWnd * );
 void focus_AllTypes( GENERICWND sbWnd * );

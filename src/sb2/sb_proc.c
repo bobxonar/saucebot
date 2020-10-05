@@ -66,7 +66,7 @@ void numCmdProc( sbWnd *wnd, void *msg ) {
 
 			for ( uint16_t i = 0; i < Lists.Size( currentWindows ); ++i ) {
 				sbWnd *w = Lists.Get( currentWindows, i );
-				ShowWindow( GetHWND( w ), SW_HIDE );
+				SBWindows.hide( w, 1 );
 			}
 
 			EngineOps.NumCmd.updateWindows( ses );
@@ -82,7 +82,7 @@ void numCmdProc( sbWnd *wnd, void *msg ) {
 
 			for ( uint16_t i = 0; i < Lists.Size( currentWindows ); ++i ) {
 				sbWnd *w = Lists.Get( currentWindows, i );
-				ShowWindow( GetHWND( w ), SW_HIDE );
+				SBWindows.hide( w, 1 );
 			}
 
 			EngineOps.NumCmd.updateWindows( ses );
@@ -173,12 +173,10 @@ void dldCmdProc( sbWnd *wnd, void *msg ) {
 		case SBEVT_D_PREVNUM: {
 			if ( ses->idx == 0 )
 				return;
-			
-			sbList *wndl = ses->windows[ ses->idx-- ];
-			for ( uint16_t i = 0; i < Lists.Size( wndl ); ++i )
-				SBWindows.hide( Lists.Get( wndl, i ) );
 
-			EngineOps.DldCmd.updateWindows( ses );
+			ses->idx--;
+			EngineOps.DldCmd.showWindows( ses );
+			
 			break;
 		}
 
@@ -186,11 +184,9 @@ void dldCmdProc( sbWnd *wnd, void *msg ) {
 			if ( ( ses->idx + 1 ) >= Lists.Size( ses->numList ) )
 				return;
 
-			sbList *wndl = ses->windows[ ses->idx++ ];
-			for ( uint16_t i = 0; i < Lists.Size( wndl ); ++i )
-				SBWindows.hide( Lists.Get( wndl, i ) );
+			ses->idx++;
+			EngineOps.DldCmd.showWindows( ses );
 
-			EngineOps.DldCmd.updateWindows( ses );
 			break;
 		}
 
@@ -204,7 +200,6 @@ void dldCmdProc( sbWnd *wnd, void *msg ) {
 				SBWindows.changeDims( SBWindows.getParent( wnd ), ses->nfscreenType, ses->nfscreen );
 			
 			EngineOps.DldCmd.showWindows( ses );
-			break;
 			break;
 		}
 
