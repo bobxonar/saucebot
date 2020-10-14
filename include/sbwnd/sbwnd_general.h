@@ -53,31 +53,47 @@
 // Tells all windows to change the current font (if fonts are applicable) and rerender their text.
 #define SBM_CHANGEFONT		(WM_APP+0x04)
 
-typedef int			dimension;
-typedef double		scalingCoefficient;
-typedef char *		String;
+typedef int		dimension;
+typedef char *	String;
 
 typedef union dimuinion {
 	int32_t intDims[4];
 	float floatDims[4];
 } sbWnd_Dims;
 
-/*
-typedef struct sbdimstruct {
+typedef struct sbloutstruct {
 
-	union {
-		int32_t intDims[4];
-		float floatDims[4];
-	} dims;
+	// Union of integers and floats (See above typedef). Each of the four array
+	// slots can only be an integer or a float. Floats will
+	// be evaluated against the parent rectangle. Ints are
+	// relative to the specified corners in the dimType member.
+	sbWnd_Dims dims;
 
-	uint8_t dimType;
+	// SB_DIMTYPE_XXXX_XX_XXXX
+	// The first four Xs are either F or I, for float or int.
+	// The second two Xs specify the coordinate space: TL, TR, BL, or BR.
+	// It refers to the corner of the parent window and the corner of the
+	// window to be created--both corners are specified at once.
+	// The last 4 Xs specify the sibling-relative coordinate space.
+	// They can either be SRTL, SRTR, SRBL, SRBR, or SRNN for a placeholder
+	// "nothing". If a sibling is given, the last 4 Xs will be the sibling
+	// corner, and the middle 2 Xs will be the window corner.
+	// For example, a window that takes up the top left 25 percent of
+	// its parent will have a type of SB_DIMTYPE_IIFF_TL_SRNN.
+	// A constant width and heightright side bar would have a type
+	// of SB_DIMTYPE_IIII_TR_SRNN. A constant size window whose top 
+	// right corner is placed next to the top left corner of that window would
+	// have a type of SB_DIMTYPE_IIII_TR_SRTL.
+	uint8_t type;
 
-	sbWnd
+	struct _Saucebot_Window_2
 		*parent,
 		*sibling;
 
-} sbWnd_Dims;
-*/
+	dimension offset[2];
+
+} sbWnd_Layout;
+
 
 typedef wchar_t *	wString;
 typedef wchar_t		wChar;
@@ -92,26 +108,26 @@ typedef wchar_t		wChar;
 
 typedef struct _Saucebot_Window_2 {
 
-	// Windows type that represents the window. Also the key for the window in the master window map.
-	HWND hwnd;
-
+	// Windows handle to window. The sbWnd type encapsulates this.
+	HWND
+		hwnd,
 	// Parent HWND, if applicable.
-	HWND parent;
+		parent;
+
+	struct _Saucebot_Window_2
+		*parentSb,
+		*sibling;
 
 	// Window ID used as an identifier for sbgui window messages.
+	// Why is this here, again?
 	uint16_t id;
 
 	// The type of the window. It is used to validate the use of functions from the SBWindow function struct.
 	uint16_t type;
 
-	// The name of the window, used in the Windows API.
 	wString name;
 
-	// Type of dimensions used on the window. 0 for integer dimensions, nonzero for scaling coefficients.
-	uint8_t dimType;
-
-	// Pointer to the dimensions used.
-	sbWnd_Dims *dims;
+	sbWnd_Layout *lout;
 	
 	// Specific data that pertains to the window according to its type.
 	void *specific;
@@ -236,21 +252,18 @@ typedef struct {
 
 	struct {
 
+		// This is a test.
 		// Syntax of creators soon to be:
-		// sbWnd *( *create )( const wString name, sbWnd_Dims* dims );
-		sbWnd *( *create )( HWND, const wString, uint8_t, sbWnd_Dims * );
-
-		void ( *destroy )( sbWnd * );
+		sbWnd *( *create )( const wString, sbWnd_Layout * );
 
 	} SBBasicWindow;
 
 
 	struct {
 
-		sbWnd *( *create )( HWND, const wString, uint8_t, sbWnd_Dims *, int );
+		sbWnd *( *create )( const wString, sbWnd_Layout *, int );
 
 		void
-			( *destroy )( sbWnd * ),
 			( *sendString )( sbWnd *, wString ),
 			( *setEnterAction )( sbWnd *, int );
 
@@ -263,10 +276,9 @@ typedef struct {
 
 	struct {
 
-		sbWnd *( *create )( HWND, const wString, uint8_t, sbWnd_Dims *, uint16_t );
+		sbWnd *( *create )( const wString, sbWnd_Layout *, uint16_t );
 
 		void
-			( *destroy )( sbWnd * ),
 			( *draw )( sbWnd *, wString ),
 			( *clear )( sbWnd * );
 
@@ -275,74 +287,59 @@ typedef struct {
 
 	struct {
 
-		sbWnd *( *create )( HWND, const wString, uint8_t, sbWnd_Dims * );
-
-		void ( *destroy )( sbWnd * );
+		sbWnd *( *create )( const wString, sbWnd_Layout * );
 		
 	} SBClickableWindow;
 
 
 	struct {
 
-		sbWnd *( *create )( HWND, const wString, uint8_t, sbWnd_Dims *, const wString );
+		sbWnd *( *create )( const wString, sbWnd_Layout *, const wString );
 
-		void
-			( *destroy )( sbWnd * ),
-			( *updateImage )( sbWnd *, const wString );
+		void ( *updateImage )( sbWnd *, const wString );
 
 	} SBRestrictedImageWindow;
 
 	struct {
 
-		sbWnd *( *create )( HWND, const wString, uint8_t, sbWnd_Dims * );
-
-		void ( *destroy )( sbWnd * );
+		sbWnd *( *create )( const wString, sbWnd_Layout * );
 
 	} SBMasterWindow;
 
 	struct {
 
-		sbWnd *( *create )( HWND, const wString, uint8_t, sbWnd_Dims * );
-
-		void ( *destroy )( sbWnd * );
+		sbWnd *( *create )( const wString, sbWnd_Layout * );
 
 	} SBViewcmdMasterWindow;
 
 	struct {
 
 		// Set last parameter to nonzero for clickable, zero for static.
-		sbWnd *( *create )( HWND, const wString, uint8_t, sbWnd_Dims *, const wString, uint16_t, int );
+		sbWnd *( *create )( const wString, sbWnd_Layout *, const wString, uint16_t, int );
 
-		void
-			( *destroy )( sbWnd * ),
-			( *changeString )( sbWnd *, const wString );
+		void ( *changeString )( sbWnd *, const wString );
 
 	} SBStringWindow;
 
 	struct {
 
-		PROGBARWND sbWnd *( *create )( HWND, const wString, uint8_t, sbWnd_Dims *, uint16_t );
+		PROGBARWND sbWnd *( *create )( const wString, sbWnd_Layout *, uint16_t );
 
-		void
-			( *destroy )( PROGBARWND sbWnd * ),
-			( *advance )( PROGBARWND sbWnd * );
+		void ( *advance )( PROGBARWND sbWnd * );
 
 	} SBProgressBarWindow;
 
 	struct {
 
-		DLDMSTWND sbWnd *( *create )( HWND, const wString, uint8_t, sbWnd_Dims * );
-
-		void ( *destroy )( DLDMSTWND sbWnd * );
+		DLDMSTWND sbWnd *( *create )( const wString, sbWnd_Layout * );
 
 	} SBDldcmdMasterWindow;
 
 	struct {
 
-		VSCROLLWND sbWnd *( *create )( HWND, const wString, uint8_t, sbWnd_Dims *, uint16_t );
+		VSCROLLWND sbWnd *( *create )( const wString, sbWnd_Layout *, uint16_t );
 
 		void
-			( *destroy )( VSCROLLWND sbWnd * ),
 			( *advance )( VSCROLLWND sbWnd * ),
 			( *retreat )( VSCROLLWND sbWnd * ),
 			( *reset )( VSCROLLWND sbWnd * ),
@@ -354,6 +351,8 @@ typedef struct {
 			( *getCurrentPos )( VSCROLLWND sbWnd * );
 
 	} SBVScrollbarWindow;
+
+	void ( *destroy )( sbWnd * );
 
 	// Appends data to the window's reference list. The user is responsible for keeping track of what data is at which index.
 	void ( *appendReference )( sbWnd *, void * );
@@ -382,12 +381,13 @@ typedef struct {
 
 	void ( *update )( GENERICWND sbWnd * );
 
-	void ( *getDims )( sbWnd *, uint8_t *, sbWnd_Dims * );
+	void ( *getLayout )( sbWnd *, sbWnd_Layout * );
+
+	void ( *addOffset )( sbWnd *, dimension, dimension );
 
 	sbWnd *( *getParent )( sbWnd * );
 
-	// Copies new dimensions in and updates window.
-	void ( *changeDims )( sbWnd *, uint8_t, sbWnd_Dims * );
+	void ( *changeLayout )( sbWnd *, sbWnd_Layout * );
 
 	void ( *toSurface )( sbWnd * );
 	void ( *focus )( sbWnd * );
@@ -438,10 +438,11 @@ void setCreateMode_AllTypes( uint8_t );
 void show_AllTypes( GENERICWND sbWnd *, int );
 void hide_AllTypes( GENERICWND sbWnd *, int );
 void update_AllTypes( GENERICWND sbWnd * );
-void changeDims_AllTypes( GENERICWND sbWnd *, uint8_t, sbWnd_Dims * );
+void changeLayout_AllTypes( GENERICWND sbWnd *, sbWnd_Layout * );
+void addOffset_AllTypes( GENERICWND sbWnd *, dimension, dimension );
 void toSurface_AllTypes( GENERICWND sbWnd * );
 void focus_AllTypes( GENERICWND sbWnd * );
-void getDims_AllTypes( GENERICWND sbWnd *, uint8_t *, sbWnd_Dims * );
+void getLayout_AllTypes( GENERICWND sbWnd *, sbWnd_Layout * );
 sbWnd *getParent_AllTypes( GENERICWND sbWnd * );
 
 TBOX

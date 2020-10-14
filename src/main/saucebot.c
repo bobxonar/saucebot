@@ -25,21 +25,6 @@ int WINAPI WinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
 	 *     -> Signals when mouse wheel
 	 *     -> Full support for origin transformations (on the dc level)--when origin is transformed, signal children.
 	 * 
-	 *     -> Make the basic text window scrollable
-	 *         -> Give this class supporter windows that it holds in its specific data
-	 *         -> Make the first sbgui-supplied signal function
-	 *         -> Should be new classes for these windows
-	 * 
-	 *     -> Drafting the scrolling stuff
-	 *         -> Constant-width
-	 *         -> A circle with 2 arcs above and below (the arcs change distance)
-	 *         -> The entire scrollbar should be a single window with clickable reigons
-	 * 
-	 * -> The dimensioning system
-	 *     -> Add sibling-relative positioning
-	 *     -> Make a dimension struct instead of two variables
-	 *     -> Add integer offsets and relative window to this struct
-	 * 
 	 * -> Download manager (lsdownload command)
 	 *     -> Fairly self-explanatory--can delete, view, whatever
 	 * 
@@ -60,24 +45,41 @@ int WINAPI WinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
 	initGUI( );
 	initSB( );
 	
-	sbWnd_Dims dims = { 0 };
-	dims.floatDims[0] = SB_CENTER_DIM( 0.5f );
-	dims.floatDims[1] = SB_CENTER_DIM( 0.5f );
-	dims.floatDims[2] = 0.5f;
-	dims.floatDims[3] = 0.5f;
-	sbWnd *first = SBMasterWindows.create( NULL, L"Saucebot 0.3 \"エッチ\"" , SB_DIMTYPE_FFFF_TL, &dims );
+	// Master window
+	sbWnd_Layout lout = { 0 };
+	lout.dims.intDims[0] = CW_USEDEFAULT;
+	lout.dims.intDims[1] = CW_USEDEFAULT;
+	lout.dims.floatDims[2] = 0.5f;
+	lout.dims.floatDims[3] = 0.5f;
+	lout.type = SB_DIMTYPE_IIFF_TL_SRNN;
 
-	sbWnd_Dims tBoxDims = { .floatDims = { 0.15f, SB_CENTER_DIM( 0.925f ), 0.55f, 0.0f } };
-	tBoxDims.intDims[3] = 19;
-	sbWnd *second = SBTextboxes.create( GetHWND( first ), L"tbox-1", SB_DIMTYPE_FFFI_TL, &tBoxDims, 0 );
+	sbWnd *first = SBMasterWindows.create( L"Saucebot 0.3 \"エッチ\"" , &lout );
 
-	sbWnd_Dims tWndDims = { .floatDims[0] = 0.75f, .floatDims[1] = 0.0f, .floatDims[2] = 0.25f, .floatDims[3] = 1.0f };
-	sbWnd *third = SBBasicTextWindows.create( GetHWND( first ), L"twnd-1", SB_DIMTYPE_FFFF_TL, &tWndDims, 15 );
+	// Textbox
+	lout.parent = first;
+	lout.type = SB_DIMTYPE_FFFI_TL_SRNN;
+	lout.dims.floatDims[0] = 0.15f;
+	lout.dims.floatDims[1] = SB_CENTER_DIM( 0.925f );
+	lout.dims.floatDims[2] = 0.55f;
+	lout.dims.intDims[3] = 19;
+
+	sbWnd *second = SBTextboxes.create( L"tbox-1", &lout, 0 );
+
+	// Logger
+	lout.type = SB_DIMTYPE_IIFF_TR_SRNN;
+	lout.dims.intDims[0] = 1;
+	lout.dims.intDims[1] = 0;
+	lout.dims.floatDims[2] = 0.25f;
+	lout.dims.floatDims[3] = 1.0f;
+
+	sbWnd *third = SBBasicTextWindows.create( L"twnd-1", &lout, 15 );
 	
-	sbWnd_Dims moreDims = { .floatDims = { 0.0f, 0.0f, 0.75f, 0.85f } };
-	moreDims.intDims[0] = 2;
-	moreDims.intDims[1] = 0;
-	sbWnd *fourth = SBBasicTextWindows.create( GetHWND( first ), L"basicwnd-1", SB_DIMTYPE_IIFF_TL, &moreDims, 15 );
+	// Viewer
+	lout.type = SB_DIMTYPE_IIFF_TL_SRNN;
+	lout.dims.floatDims[2] = 0.75f;
+	lout.dims.floatDims[3] = 0.85f;
+	
+	sbWnd *fourth = SBBasicTextWindows.create( L"basicwnd-1", &lout, 15 );
 
 	SBWindows.setSignalFn( second, sbEntry );
 	SBWindows.appendReference( second, fourth );

@@ -14,7 +14,9 @@
 SBWindowFnStruct SBWindow;
 
 
-HWND GetHWND( sbWnd *wnd ) { return wnd->hwnd; }
+HWND GetHWND( sbWnd *wnd ) {
+	return wnd == NULL ? NULL : wnd->hwnd;
+}
 
 wString GetTextboxString( TBOX sbWnd *wnd ) {
 	if ( wnd->type == TEXTBOX_WINDOW )
@@ -96,10 +98,22 @@ uint32_t getStringWidth_AllTypes( wString str, uint32_t size ) {
 	return LOWORD( sz );
 }
 
-void changeDims_AllTypes( GENERICWND sbWnd *wnd, uint8_t dimType, sbWnd_Dims *dims ) {
-	wnd->dimType = dimType;
-	memcpy( wnd->dims, dims, sizeof( sbWnd_Dims ) );
-	ChildSizingProc( wnd->hwnd, 0 ); // Evaluates dimensions, moves the window, repaints the window.
+void changeLayout_AllTypes( GENERICWND sbWnd *wnd, sbWnd_Layout *lout ) {
+	memcpy( wnd->lout, lout, sizeof( sbWnd_Layout ) );
+	// The semantics of calling ChildSizingProc once are odd, but
+	// I don't want to duplicate code. It evaluates the dimensions and
+	// moves the window to the new dimensions.
+	ChildSizingProc( wnd->hwnd, 0 );
+}
+
+void addOffset_AllTypes( GENERICWND sbWnd *wnd, dimension x, dimension y ) {
+	if ( wnd == NULL )
+		return;
+
+	sbWnd_Layout *lout = wnd->lout;
+	lout->offset[0] += ( lout->type & 0x10 ? -1 : 1 ) * x;
+	lout->offset[1] += ( lout->type & 0x20 ? -1 : 1 ) * y;
+	ChildSizingProc( wnd->hwnd, 0 );
 }
 
 void toSurface_AllTypes( GENERICWND sbWnd *wnd ) {
@@ -110,18 +124,12 @@ void focus_AllTypes( GENERICWND sbWnd *wnd ) {
 	SetFocus( wnd->hwnd );
 }
 
-void getDims_AllTypes( GENERICWND sbWnd *wnd, uint8_t *dimType, sbWnd_Dims *dims ) {
-	*dimType = wnd->dimType;
-	memcpy( dims, wnd->dims, sizeof( sbWnd_Dims ) );
-	return;
+void getLayout_AllTypes( GENERICWND sbWnd *wnd, sbWnd_Layout *lout ) {
+	memcpy( lout, wnd->lout, sizeof( sbWnd_Layout ) );
 }
 
 sbWnd *getParent_AllTypes( GENERICWND sbWnd *wnd ) {
-	HWND phwnd = wnd->parent;
-	if ( phwnd != NULL )
-		return ( void * )GetWindowLongPtrW( wnd->parent, GWLP_USERDATA );
-
-	return NULL;
+	return wnd->parentSb;
 }
 
 void CallSignalFn_AllTypes( GENERICWND sbWnd *wnd, GENERICWND sbWnd *wnd_arg, void *data_arg ) {

@@ -9,63 +9,75 @@
 #include "sbwnd/sbwnd_create.h"
 #include "sbwnd/sbwnd_general.h"
 
-sbWnd *CommonInfoCreator( HWND parent, const wString name, uint8_t dimType, sbWnd_Dims *dims ) {
+sbWnd *CommonInfoCreatorLayout( const wString name, sbWnd_Layout *lout ) {
 	sbWnd *fin = newptr( sbWnd );
+	if ( fin == NULL )
+		return NULL;
+
 	fin->id = SbGUIMaster.large_id++;
 	fin->referenceList = Lists.New( );
-	fin->parent = parent;
+	fin->parent = GetHWND( lout->parent );
 	fin->name = name;
-	fin->dimType = dimType;
-	fin->dims = newptr( sbWnd_Dims );
-	memcpy( fin->dims, dims, sizeof( sbWnd_Dims ) );
-	if ( parent == NULL && wcscmp( name, L"testwindow" ) ) // Test window doesn't recieve messages.
+	fin->lout = newptr( sbWnd_Layout );
+	fin->parentSb = lout->parent;
+	fin->sibling = lout->sibling;
+
+	if ( fin->lout == NULL )
+		return NULL;
+	memcpy( fin->lout, lout, sizeof( sbWnd_Layout ) );
+	if ( lout->parent == NULL && wcscmp( name, L"testwindow" ) ) // Test window doesn't recieve messages.
 		Lists.Add( SbGUIMaster.TopLevelWindows, fin );
 	return fin;
 }
 
-void sbWndEvaluateDims( HWND parent, uint8_t dimType, sbWnd_Dims *dims, dimension evalDims[4] ) {
+
+int sbWndEvaluateLayout( sbWnd_Layout *lout, dimension evalDims[4] ) {
+	sbWnd_Dims *dims = &lout->dims;
+	uint8_t dimType = lout->type;
+
+	// Parent rectangle width and height.
 	int
-		w = 0,
-		h = 0;
+		pw = SbGUIMaster.scrWidth,
+		ph = SbGUIMaster.scrHeight;
 
-	/* 
-	dimension
-		parentDims[4] = { 0 },
-		siblingDims[4] = { 0 };
-
-	*/
-
-	// Evaluate parent dimensions--this will eventually become recursive (no it wont retard) as
-	// dimension evaluation is a dynamic process as windows resize.
-	if ( dimType & 0xF && parent == NULL ) {
-	
-		w = SbGUIMaster.scrWidth;
-		h = SbGUIMaster.scrHeight;
-
-	} else if ( parent != NULL ) {
+	if ( lout->parent != NULL ) {
 
 		RECT r = { 0 };
-		GetClientRect( parent, &r );
-		w = r.right - r.left;
-		h = r.bottom - r.top;
+		/*
+		 * I'd rather not have to use GetClientRect() here,
+		 * but this does not work otherwise. I don't know how
+		 * exactly it's implemented, but memcpy() on a saucebot-maintained
+		 * client rectangle doesn't work in the case of maximizations.
+		 */
+		GetClientRect( GetHWND( lout->parent ), &r );
+		pw = r.right;
+		ph = r.bottom;
 
 	}
 
-	// Sibling evaluation goes here in the future.
 
-	// Initial evaluation of dimensions--basic float to int conversion
-	// on the lowest 4 bits of the dimension type.
-	// This assumes top left cornering at first.
+	// Next, evaluate width, height, and inital evaluation for corners.
+	// This is the original float to int conversion--essentially the subRect()
+	// function from earlier versions of saucebot.
+	// Even then, this has more functionality than subRect() anyways :^).
 	for ( int i = 0; i < 4; ++i ) {
 		if ( dimType & ( 0x8 >> i ) )
-			evalDims[i] = dims->floatDims[i] * ( i % 2 == 0 ? w : h );
+			evalDims[i] = dims->floatDims[i] * ( i % 2 == 0 ? pw : ph );
 		else
 			evalDims[i] = dims->intDims[i];
 	}
 
+	// Next, the corners.
+	// There are 2 possible tracks for this: sibling relative and parent relative.
+	// Parent relative is the only evaluation method availible right now,
+	// the largest advantage of these layouts is the sibling relative positioning option.
+
 	dimension
 		cornerX = evalDims[0],
 		cornerY = evalDims[1];
+	
+	if ( lout->sibling != NULL )
+		goto sibling_track;
 
 	// Evaluate centering to top left for now.
 	if ( cornerX < 0 && cornerX != CW_USEDEFAULT )
@@ -75,279 +87,265 @@ void sbWndEvaluateDims( HWND parent, uint8_t dimType, sbWnd_Dims *dims, dimensio
 		cornerY = ( -cornerY ) - ( evalDims[3] / 2 );
 
 	
-	// Evaluate transformed corners. Uses the correct transformations
-	// this time.
+	// Evaluate transformed corners.
 	if ( dimType & 0x10 )
-		cornerX = ( w - cornerX ) - evalDims[2];
+		cornerX = ( pw - cornerX ) - evalDims[2];
 	
 	if ( dimType & 0x20 )
-		cornerY = ( h - cornerY ) - evalDims[3];
+		cornerY = ( ph - cornerY ) - evalDims[3];
 
 
 	evalDims[0] = cornerX;
 	evalDims[1] = cornerY;
-	return;
+
+	evalDims[0] += lout->offset[0];
+	evalDims[1] += lout->offset[1];
+
+	return 0;
+
+	sibling_track: (void)0; // fuck off gcc I want to use my own variable declaration style
+
+	if ( cornerX == CW_USEDEFAULT || cornerY == CW_USEDEFAULT )
+		return 1; // CW_USEDEFAULT is not to be used in sibling-relative positioning
+
+	dimension
+		sCornerX,
+		sCornerY,
+		sDims[4] = { 0 };
+	
+	int res = sbWndEvaluateLayout( lout->sibling->lout, sDims );
+	if ( res )
+		return 1;
+
+	sCornerX = 0x40 & dimType // sibling corner left/right
+	?	sDims[0] + sDims[2]
+	:	sDims[0];
+
+	sCornerY = 0x80 & dimType // sibling corner top/bottom
+	?	sDims[1] + sDims[3]
+	:	sDims[1];
+
+	// Centering ignores sibling corner and just goes to the center.
+	// Note: you currently cannot center at 0. Just a thought...
+	// Also note: positioning windows relative to the center on Y and X
+	// can be used for radial positioning. It has no use for saucebot,
+	// just thought I'd put that out there for any future readers.
+	if ( cornerX < 0 ) {
+		sCornerX = sDims[0] + sDims[2] / 2;
+		cornerX = -cornerX;
+	}
+
+	if ( cornerY < 0 ) {
+		sCornerY = sDims[1] + sDims[3] / 2;
+		cornerY = -cornerY;
+	}
+
+	// Evaluate window corner, now that the sibling corner has been found.
+	// Evaluate to top left first, then move to other corner.
+	cornerX = sCornerX + ( 0x40 & dimType ? 1 : -1 ) * cornerX;
+	cornerX -= 0x10 & dimType ? evalDims[2] : 0;
+
+	cornerY = sCornerY + ( 0x80 & dimType ? 1 : -1 ) * cornerY;
+	cornerY -= 0x20 & dimType ? evalDims[3] : 0;
+	
+	evalDims[0] = cornerX;
+	evalDims[1] = cornerY;
+
+	evalDims[0] += lout->offset[0];
+	evalDims[1] += lout->offset[1];
+
+	return 0;
 }
 
-HWND BasicWindowHWNDCreator( HWND parent, const wString name, uint8_t dimType, sbWnd_Dims *dims, sbWnd *wnd ) {
-
-	DWORD style = WS_OVERLAPPEDWINDOW;
-	if ( parent != NULL )
-		style = WS_CHILD | WS_BORDER;
-
-	if ( SbGUIMaster.createMode )
-		style |= WS_VISIBLE;
-
+HWND HWNDCreator( const wString name, sbWnd_Layout *lout, DWORD style, DWORD exs, const wString cname, sbWnd *wnd ) {
 	dimension finDims[4] = { 0 };
-	sbWndEvaluateDims( parent, dimType, dims, finDims );
+	int res = sbWndEvaluateLayout( lout, finDims );
+	if ( res )
+		return NULL;
 
 	return CreateWindowExW(
-		0,
-		SbGUIMaster.WindowClassNameArray[ BASIC_WINDOW ],
+		exs,
+		cname,
 		name,
 		style,
-		finDims[0], finDims[1], finDims[2], finDims[3],
-		parent,
+		finDims[0],
+		finDims[1],
+		finDims[2],
+		finDims[3],
+		GetHWND( lout->parent ),
 		NULL,
 		GetModuleHandleW( NULL ),
 		wnd
 	);
 }
 
-HWND TextboxHWNDCreator( HWND parent, const wString name, uint8_t dimType, sbWnd_Dims *dims, sbWnd *wnd ) {
+HWND BasicWindowHWNDCreator( const wString name, sbWnd_Layout *lout, sbWnd *wnd ) {
+
+	DWORD style = WS_OVERLAPPEDWINDOW;
+	if ( lout->parent != NULL )
+		style = WS_CHILD | WS_BORDER;
+
+	if ( SbGUIMaster.createMode )
+		style |= WS_VISIBLE;
+
+	return HWNDCreator(
+		name, lout, style, 0,
+		SbGUIMaster.WindowClassNameArray[ BASIC_WINDOW ], wnd
+	);
+}
+
+HWND TextboxHWNDCreator( const wString name, sbWnd_Layout *lout, sbWnd *wnd ) {
 	// Textboxes MUST have a parent window.
-	if ( parent == NULL ) return NULL;
+	if ( lout->parent == NULL ) return NULL;
 	
-	dimension finDims[4] = { 0 };
-	sbWndEvaluateDims( parent, dimType, dims, finDims );
+	DWORD style = WS_BORDER | WS_CHILD;
+
+	if ( SbGUIMaster.createMode )
+		style |= WS_VISIBLE;
 	
-	return CreateWindowExW(
-		0,
-		SbGUIMaster.WindowClassNameArray[ TEXTBOX_WINDOW ],
-		name,
-		WS_CHILD | WS_BORDER | ( SbGUIMaster.createMode ? WS_VISIBLE : 0 ),
-		finDims[0], finDims[1], finDims[2], finDims[3],
-		parent,
-		NULL,
-		GetModuleHandleW( NULL ),
-		wnd
+	return HWNDCreator(
+		name, lout, style, 0,
+		SbGUIMaster.WindowClassNameArray[ TEXTBOX_WINDOW ], wnd
 	);
 }
 
-HWND BasicTextWindowHWNDCreator( HWND parent, const wString name, uint8_t dimType, sbWnd_Dims *dims, sbWnd *wnd ) {
+HWND BasicTextWindowHWNDCreator( const wString name, sbWnd_Layout *lout , sbWnd *wnd ) {
 
 	DWORD style = WS_OVERLAPPEDWINDOW;
-	if ( parent != NULL )
+	if ( lout->parent != NULL )
 		style = WS_CHILD | WS_BORDER;
 
 	if ( SbGUIMaster.createMode )
 		style |= WS_VISIBLE;
-
-	dimension finDims[4] = { 0 };
-	sbWndEvaluateDims( parent, dimType, dims, finDims );
 	
-	return CreateWindowExW(
-		0,
-		SbGUIMaster.WindowClassNameArray[ TEXT_WINDOW ],
-		name,
-		style,
-		finDims[0], finDims[1], finDims[2], finDims[3],
-		parent,
-		NULL,
-		GetModuleHandleW( NULL ),
-		wnd
+	return HWNDCreator(
+		name, lout, style, 0,
+		SbGUIMaster.WindowClassNameArray[ TEXT_WINDOW ], wnd
 	);
 
 }
 
-HWND ClickableWindowHWNDCreator( HWND parent, const wString name, uint8_t dimType, sbWnd_Dims *dims, sbWnd *wnd ) {
+HWND ClickableWindowHWNDCreator( const wString name, sbWnd_Layout *lout, sbWnd *wnd ) {
 	// Clickable windows MUST have a parent window.
-	if ( parent == NULL ) return NULL;
-
-	dimension finDims[4] = { 0 };
-	sbWndEvaluateDims( parent, dimType, dims, finDims );
+	if ( lout->parent == NULL ) return NULL;
 	
-	return CreateWindowExW(
-		0,
-		SbGUIMaster.WindowClassNameArray[ CLICKABLE_WINDOW ],
-		name,
-		WS_CHILD | WS_BORDER,
-		finDims[0], finDims[1], finDims[2], finDims[3],
-		parent,
-		NULL,
-		GetModuleHandleW( NULL ),
-		wnd
+	DWORD style = WS_BORDER | WS_CHILD;
+
+	if ( SbGUIMaster.createMode )
+		style |= WS_VISIBLE;
+	
+	return HWNDCreator(
+		name, lout, style, 0,
+		SbGUIMaster.WindowClassNameArray[ CLICKABLE_WINDOW ], wnd
 	);
 }
 
-HWND RestrictedImageWindowHWNDCreator( HWND parent, const wString name, uint8_t dimType, sbWnd_Dims *dims, sbWnd *wnd ) {
+HWND RestrictedImageWindowHWNDCreator( const wString name, sbWnd_Layout *lout , sbWnd *wnd ) {
 	
 	DWORD style = WS_OVERLAPPEDWINDOW;
-	if ( parent != NULL )
+	if ( lout->parent != NULL )
 		style = WS_CHILD;
 
 	if ( SbGUIMaster.createMode )
 		style |= WS_VISIBLE;
 
-	dimension finDims[4] = { 0 };
-	sbWndEvaluateDims( parent, dimType, dims, finDims );
-
-	return CreateWindowExW(
-		0,
-		SbGUIMaster.WindowClassNameArray[ RESTRICTED_IMAGE_WINDOW ],
-		name,
-		style,
-		finDims[0], finDims[1], finDims[2], finDims[3],
-		parent,
-		NULL,
-		GetModuleHandleW( NULL ),
-		wnd
+	return HWNDCreator(
+		name, lout, style, 0,
+		SbGUIMaster.WindowClassNameArray[ RESTRICTED_IMAGE_WINDOW ], wnd
 	);
 }
 
-HWND MasterWindowHWNDCreator( HWND parent, const wString name, uint8_t dimType, sbWnd_Dims *dims, sbWnd *wnd ) {
-	if ( parent != NULL )
+HWND MasterWindowHWNDCreator( const wString name, sbWnd_Layout *lout, sbWnd *wnd ) {
+	if ( lout->parent != NULL )
 		return NULL; // Master windows are not allowed to have a parent.
 
-	dimension finDims[4] = { 0 };
-	sbWndEvaluateDims( parent, dimType, dims, finDims );
+	DWORD style = WS_OVERLAPPEDWINDOW;
+	if ( SbGUIMaster.createMode )
+		style |= WS_VISIBLE;
 	
-	return CreateWindowExW(
-		WS_EX_COMPOSITED,
-		SbGUIMaster.WindowClassNameArray[ MASTER_WINDOW ],
-		name,
-		WS_OVERLAPPEDWINDOW | ( SbGUIMaster.createMode ? WS_VISIBLE : 0 ),
-		finDims[0], finDims[1], finDims[2], finDims[3],
-		parent,
-		NULL,
-		GetModuleHandleW( NULL ),
-		wnd
-	);
+	return HWNDCreator(
+		name, lout, style, WS_EX_COMPOSITED,
+		SbGUIMaster.WindowClassNameArray[ MASTER_WINDOW ], wnd
+ 	);
 }
 
-HWND ViewcmdMasterWindowHWNDCreator( HWND parent, const wString name, uint8_t dimType, sbWnd_Dims *dims, sbWnd *wnd ) {
+HWND ViewcmdMasterWindowHWNDCreator( const wString name, sbWnd_Layout *lout, sbWnd *wnd ) {
 
 	DWORD style = WS_OVERLAPPEDWINDOW;
-	if ( parent != NULL )
+	if ( lout->parent != NULL )
 		style = WS_CHILD;
 
 	if ( SbGUIMaster.createMode )
 		style |= WS_VISIBLE;
 
-	dimension finDims[4] = { 0 };
-	sbWndEvaluateDims( parent, dimType, dims, finDims );
-	
-	return CreateWindowExW(
-		0,
-		SbGUIMaster.WindowClassNameArray[ VIEWCMD_MASTER_WINDOW ],
-		name,
-		style,
-		finDims[0], finDims[1], finDims[2], finDims[3],
-		parent,
-		NULL,
-		GetModuleHandleW( NULL ),
-		wnd
+	return HWNDCreator(
+		name, lout, style, 0,
+		SbGUIMaster.WindowClassNameArray[ VIEWCMD_MASTER_WINDOW ], wnd
 	);
 }
 
-HWND StringWindowHWNDCreator( HWND parent, const wString name, uint8_t dimType, sbWnd_Dims *dims, sbWnd *wnd ) {
+HWND StringWindowHWNDCreator( const wString name, sbWnd_Layout *lout, sbWnd *wnd ) {
 
 	DWORD style = WS_OVERLAPPEDWINDOW;
-	if ( parent != NULL )
+	if ( lout->parent != NULL )
 		style = WS_CHILD;
 
 	if ( SbGUIMaster.createMode )
 		style |= WS_VISIBLE;
 
-	dimension finDims[4] = { 0 };
-	sbWndEvaluateDims( parent, dimType, dims, finDims );
-	
-	return CreateWindowExW(
-		0,
-		SbGUIMaster.WindowClassNameArray[ STRING_WINDOW ],
-		name,
-		style,
-		finDims[0], finDims[1], finDims[2], finDims[3],
-		parent,
-		NULL,
-		GetModuleHandleW( NULL ),
-		wnd
+	return HWNDCreator(
+		name, lout, style, 0,
+		SbGUIMaster.WindowClassNameArray[ STRING_WINDOW ], wnd
 	);
 }
 
-HWND ProgressBarWindowHWNDCreator( HWND parent, const wString name, uint8_t dimType, sbWnd_Dims *dims, sbWnd *wnd ) {
+HWND ProgressBarWindowHWNDCreator( const wString name, sbWnd_Layout *lout, sbWnd *wnd ) {
 	// Progress bars MUST have a parent window.
-	if ( parent == NULL ) return NULL;
+	if ( lout->parent == NULL ) return NULL;
+
+	DWORD style = WS_CHILD | WS_BORDER;
+	if ( SbGUIMaster.createMode )
+		style |= WS_VISIBLE;
 	
-	dimension finDims[4] = { 0 };
-	sbWndEvaluateDims( parent, dimType, dims, finDims );
-	
-	return CreateWindowExW(
-		0,
-		SbGUIMaster.WindowClassNameArray[ PROGRESS_BAR_WINDOW ],
-		name,
-		WS_CHILD | WS_BORDER | ( SbGUIMaster.createMode ? WS_VISIBLE : 0 ),
-		finDims[0], finDims[1], finDims[2], finDims[3],
-		parent,
-		NULL,
-		GetModuleHandleW( NULL ),
-		wnd
+	return HWNDCreator(
+		name, lout, style, 0,
+		SbGUIMaster.WindowClassNameArray[ PROGRESS_BAR_WINDOW ], wnd
 	);
 }
 
-HWND DldcmdMasterWindowHWNDCreator( HWND parent, const wString name, uint8_t dimType, sbWnd_Dims *dims, sbWnd *wnd ) {
+HWND DldcmdMasterWindowHWNDCreator( const wString name, sbWnd_Layout *lout, sbWnd *wnd ) {
 
 	DWORD style = WS_OVERLAPPEDWINDOW;
-	if ( parent != NULL )
+	if ( lout->parent != NULL )
 		style = WS_CHILD;
 
 	if ( SbGUIMaster.createMode )
 		style |= WS_VISIBLE;
 
-	dimension finDims[4] = { 0 };
-	sbWndEvaluateDims( parent, dimType, dims, finDims );
-	
-	return CreateWindowExW(
-		0,
-		SbGUIMaster.WindowClassNameArray[ VIEWCMD_MASTER_WINDOW ],
-		name,
-		style,
-		finDims[0], finDims[1], finDims[2], finDims[3],
-		parent,
-		NULL,
-		GetModuleHandleW( NULL ),
-		wnd
+	return HWNDCreator(
+		name, lout, style, 0,
+		SbGUIMaster.WindowClassNameArray[ DLDCMD_MASTER_WINDOW ], wnd
 	);
 }
 
-HWND VScrollbarWindowHWNDCreator( HWND parent, const wString name, uint8_t dimType, sbWnd_Dims *dims, sbWnd *wnd ) {
+HWND VScrollbarWindowHWNDCreator( const wString name, sbWnd_Layout *lout, sbWnd *wnd ) {
+	// VScrollbar widows MUST have a parent window.
+	if ( lout->parent == NULL )
+		return NULL;
 
-	DWORD style = WS_OVERLAPPEDWINDOW;
-	if ( parent != NULL )
-		style = WS_CHILD;
-
+	DWORD style = WS_CHILD;
 	if ( SbGUIMaster.createMode )
 		style |= WS_VISIBLE;
 
-	dimension finDims[4] = { 0 };
-	sbWndEvaluateDims( parent, dimType, dims, finDims );
-	
-	return CreateWindowExW(
-		0,
-		SbGUIMaster.WindowClassNameArray[ VSCROLLBAR_WINDOW ],
-		name,
-		style,
-		finDims[0], finDims[1], finDims[2], finDims[3],
-		parent,
-		NULL,
-		GetModuleHandleW( NULL ),
-		wnd
+	return HWNDCreator(
+		name, lout, style, 0,
+		SbGUIMaster.WindowClassNameArray[ VSCROLLBAR_WINDOW ], wnd
 	);
 }
 
-sbWnd *BasicWindowCreator( HWND parent, const wString name, uint8_t dimType, sbWnd_Dims *dims ) {
-	sbWnd *fin = CommonInfoCreator( parent, name, dimType, dims );
-	fin->hwnd = BasicWindowHWNDCreator( parent, name, dimType, dims, fin );
+sbWnd *BasicWindowCreator( const wString name, sbWnd_Layout *lout ) {
+	sbWnd *fin = CommonInfoCreatorLayout( name, lout );
+	fin->hwnd = BasicWindowHWNDCreator( name, lout, fin );
 	
 	if ( fin->hwnd == NULL )
 		return NULL;
@@ -358,9 +356,9 @@ sbWnd *BasicWindowCreator( HWND parent, const wString name, uint8_t dimType, sbW
 	return fin;
 }
 
-sbWnd *TextboxCreator( HWND parent, const wString name, uint8_t dimType, sbWnd_Dims *dims, int enterAction ) {
-	sbWnd *fin = CommonInfoCreator( parent, name, dimType, dims );
-	fin->hwnd = TextboxHWNDCreator( parent, name, dimType, dims, fin );
+sbWnd *TextboxCreator( const wString name, sbWnd_Layout *lout, int enterAction ) {
+	sbWnd *fin = CommonInfoCreatorLayout( name, lout );
+	fin->hwnd = TextboxHWNDCreator( name, lout, fin );
 	
 	if ( fin->hwnd == NULL )
 		return NULL;
@@ -372,9 +370,9 @@ sbWnd *TextboxCreator( HWND parent, const wString name, uint8_t dimType, sbWnd_D
 	return fin;
 }
 
-sbWnd *BasicTextWindowCreator( HWND parent, const wString name, uint8_t dimType, sbWnd_Dims *dims, uint16_t nLines ) {
-	sbWnd *fin = CommonInfoCreator( parent, name, dimType, dims );
-	fin->hwnd = BasicTextWindowHWNDCreator( parent, name, dimType, dims, fin );
+sbWnd *BasicTextWindowCreator( const wString name, sbWnd_Layout *lout, uint16_t nLines ) {
+	sbWnd *fin = CommonInfoCreatorLayout( name, lout );
+	fin->hwnd = BasicTextWindowHWNDCreator( name, lout, fin );
 	
 	if ( fin->hwnd == NULL )
 		return NULL;
@@ -386,9 +384,9 @@ sbWnd *BasicTextWindowCreator( HWND parent, const wString name, uint8_t dimType,
 	return fin;
 }
 
-sbWnd *ClickableWindowCreator( HWND parent, const wString name, uint8_t dimType, sbWnd_Dims *dims ) {
-	sbWnd *fin = CommonInfoCreator( parent, name, dimType, dims );
-	fin->hwnd = ClickableWindowHWNDCreator( parent, name, dimType, dims, fin );
+sbWnd *ClickableWindowCreator( const wString name, sbWnd_Layout *lout ) {
+	sbWnd *fin = CommonInfoCreatorLayout( name, lout );
+	fin->hwnd = ClickableWindowHWNDCreator( name, lout, fin );
 	
 	if ( fin->hwnd == NULL )
 		return NULL;
@@ -400,9 +398,9 @@ sbWnd *ClickableWindowCreator( HWND parent, const wString name, uint8_t dimType,
 	return fin;
 }
 
-sbWnd *RestrictedImageWindowCreator( HWND parent, const wString name, uint8_t dimType, sbWnd_Dims *dims, const wString path ) {
-	sbWnd *fin = CommonInfoCreator( parent, name, dimType, dims );
-	fin->hwnd = RestrictedImageWindowHWNDCreator( parent, name, dimType, dims, fin );
+sbWnd *RestrictedImageWindowCreator( const wString name, sbWnd_Layout *lout, const wString path ) {
+	sbWnd *fin = CommonInfoCreatorLayout( name, lout );
+	fin->hwnd = RestrictedImageWindowHWNDCreator( name, lout, fin );
 	
 	if ( fin->hwnd == NULL )
 		return NULL;
@@ -414,12 +412,12 @@ sbWnd *RestrictedImageWindowCreator( HWND parent, const wString name, uint8_t di
 	return fin;
 }
 
-sbWnd *MasterWindowCreator( HWND parent, const wString name, uint8_t dimType, sbWnd_Dims *dims ) {
+sbWnd *MasterWindowCreator( const wString name, sbWnd_Layout *lout ) {
 	if ( SbGUIMaster.masterWnd != NULL )
 		return NULL;
 
-	sbWnd *fin = CommonInfoCreator( parent, name, dimType, dims );
-	fin->hwnd = MasterWindowHWNDCreator( parent, name, dimType, dims, fin );
+	sbWnd *fin = CommonInfoCreatorLayout( name, lout );
+	fin->hwnd = MasterWindowHWNDCreator( name, lout, fin );
 
 	if ( fin->hwnd == NULL )
 		return NULL;
@@ -431,9 +429,9 @@ sbWnd *MasterWindowCreator( HWND parent, const wString name, uint8_t dimType, sb
 	return fin;
 }
 
-sbWnd *ViewcmdMasterWindowCreator( HWND parent, const wString name, uint8_t dimType, sbWnd_Dims *dims ) {
-	sbWnd *fin = CommonInfoCreator( parent, name, dimType, dims );
-	fin->hwnd = ViewcmdMasterWindowHWNDCreator( parent, name, dimType, dims, fin );
+sbWnd *ViewcmdMasterWindowCreator( const wString name, sbWnd_Layout *lout ) {
+	sbWnd *fin = CommonInfoCreatorLayout( name, lout );
+	fin->hwnd = ViewcmdMasterWindowHWNDCreator( name, lout, fin );
 	
 	if ( fin->hwnd == NULL )
 		return NULL;
@@ -444,29 +442,30 @@ sbWnd *ViewcmdMasterWindowCreator( HWND parent, const wString name, uint8_t dimT
 	return fin;
 }
 
-sbWnd *StringWindowCreator( HWND parent, const wString name, uint8_t dimType, sbWnd_Dims *dims, const wString str, uint16_t fontSize, int clickable ) {
+sbWnd *StringWindowCreator( const wString name, sbWnd_Layout *lout, const wString str, uint16_t fontSize, int clickable ) {
 	// Self-sizing.
-	sbWnd_Dims selfSize = { 0 };
-	memcpy( &selfSize, dims, sizeof( sbWnd_Dims ) );
-	selfSize.intDims[2] = SBWindows.getStringWidth( str, fontSize ) + 4;
-	selfSize.intDims[3] = fontSize + 2;
+	sbWnd_Layout selfSize = { 0 };
+	memcpy( &selfSize, lout, sizeof( sbWnd_Layout ) );
+	selfSize.dims.intDims[2] = SBWindows.getStringWidth( str, fontSize ) + 4;
+	selfSize.dims.intDims[3] = fontSize + 2;
+	selfSize.type &= 0x3C;
 
-	sbWnd *fin = CommonInfoCreator( parent, name, ( dimType & 0x3C ), &selfSize );
-	fin->hwnd = StringWindowHWNDCreator( parent, name, ( dimType & 0x3C ), &selfSize, fin );
+	sbWnd *fin = CommonInfoCreatorLayout( name, &selfSize );
+	fin->type = STRING_WINDOW;
+	fin->hwnd = StringWindowHWNDCreator( name, &selfSize, fin );
 	
 	if ( fin->hwnd == NULL )
 		return NULL;
 
 	fin->specific = StringWindowInfoCreator( str, fontSize, clickable );
-	fin->type = STRING_WINDOW;
 
 	UpdateWindow( fin->hwnd );
 	return fin;
 }
 
-sbWnd *DldcmdMasterWindowCreator( HWND parent, const wString name, uint8_t dimType, sbWnd_Dims *dims ) {
-	sbWnd *fin = CommonInfoCreator( parent, name, dimType, dims );
-	fin->hwnd = DldcmdMasterWindowHWNDCreator( parent, name, dimType, dims, fin );
+sbWnd *DldcmdMasterWindowCreator( const wString name, sbWnd_Layout *lout ) {
+	sbWnd *fin = CommonInfoCreatorLayout( name, lout );
+	fin->hwnd = DldcmdMasterWindowHWNDCreator( name, lout, fin );
 	
 	if ( fin->hwnd == NULL )
 		return NULL;
@@ -477,9 +476,9 @@ sbWnd *DldcmdMasterWindowCreator( HWND parent, const wString name, uint8_t dimTy
 	return fin;
 }
 
-sbWnd *ProgressBarWindowCreator( HWND parent, const wString name, uint8_t dimType, sbWnd_Dims *dims, uint16_t total ) {
-	sbWnd *fin = CommonInfoCreator( parent, name, dimType, dims );
-	fin->hwnd = ProgressBarWindowHWNDCreator( parent, name, dimType, dims, fin );
+sbWnd *ProgressBarWindowCreator( const wString name, sbWnd_Layout *lout, uint16_t total ) {
+	sbWnd *fin = CommonInfoCreatorLayout( name, lout );
+	fin->hwnd = ProgressBarWindowHWNDCreator( name, lout, fin );
 	
 	if ( fin->hwnd == NULL )
 		return NULL;
@@ -491,9 +490,9 @@ sbWnd *ProgressBarWindowCreator( HWND parent, const wString name, uint8_t dimTyp
 	return fin;
 }
 
-sbWnd *VScrollbarWindowCreator( HWND parent, const wString name, uint8_t dimType, sbWnd_Dims *dims, uint16_t incDist ) {
-	sbWnd *fin = CommonInfoCreator( parent, name, dimType, dims );
-	fin->hwnd = VScrollbarWindowHWNDCreator( parent, name, dimType, dims, fin );
+sbWnd *VScrollbarWindowCreator( const wString name, sbWnd_Layout *lout, uint16_t incDist ) {
+	sbWnd *fin = CommonInfoCreatorLayout( name, lout );
+	fin->hwnd = VScrollbarWindowHWNDCreator( name, lout, fin );
 	
 	if ( fin->hwnd == NULL )
 		return NULL;
@@ -546,18 +545,15 @@ SBBasicTextWindowInfo *BasicTextWindowInfoCreator( HWND hwnd, uint16_t fontSize 
 	int h = r.bottom - r.top;
 	fin->currentFont->lfHeight = fin->fontSize;
 
-	sbWnd_Dims dims = { 0 };
-	dims.intDims[0] = 1;
-	dims.intDims[2] = 11;
-	dims.floatDims[3] = 1.0f;
+	sbWnd_Layout lout = { 0 };
+	lout.parent = ( sbWnd * )GetWindowLongPtrW( hwnd, GWLP_USERDATA );
+	lout.type = SB_DIMTYPE_IIIF_TR_SRNN;
+	lout.dims.intDims[0] = 1;
+	lout.dims.intDims[2] = 11;
+	lout.dims.floatDims[3] = 1.0f;
+
 	SBWindows.setCreateMode( SBWND_CREATEMODE_HIDE );
-	fin->scrollbar = SBVScrollbarWindows.create(
-		hwnd,
-		L"vscrollbar-textwnd",
-		SB_DIMTYPE_IIIF_TR,
-		&dims,
-		15
-	);
+	fin->scrollbar = SBVScrollbarWindows.create( L"vscrollbar-textwnd", &lout, 15 );
 	SBWindows.setCreateMode( SBWND_CREATEMODE_SHOW );
 
 	return fin;
@@ -618,121 +614,134 @@ SBVScrollbarWindowInfo *VScrollbarWindowInfoCreator( uint16_t incDist ) {
 	return fin;
 }
 
+void destroy_AllTypes( sbWnd *wnd ) {
+	if ( wnd == NULL )
+		return;
+
+	switch( wnd->type ) {
+
+		case TEXTBOX_WINDOW:
+			sbWnd_DeleteTextboxInfo( wnd->specific );
+			break;
+
+		case TEXT_WINDOW:
+			sbWnd_DeleteBasicTextWindowInfo( wnd->specific );
+			break;
+
+		case CLICKABLE_WINDOW:
+			sbWnd_DeleteClickableWindowInfo( wnd->specific );
+			break;
+
+		case RESTRICTED_IMAGE_WINDOW:
+			sbWnd_DeleteRestrictedImageWindowInfo( wnd->specific );
+			break;
+
+		case STRING_WINDOW:
+			sbWnd_DeleteStringWindowInfo( wnd->specific );
+			break;
+
+		case PROGRESS_BAR_WINDOW:
+			sbWnd_DeleteProgressBarWindowInfo( wnd->specific );
+			break;
+
+		case VSCROLLBAR_WINDOW:
+			sbWnd_DeleteVScrollbarWindowInfo( wnd->specific );
+			break;
+
+	}
+	sbWndCommonDestructor( wnd );
+	return;
+}
+
+void sbWndCommonDestructor( sbWnd *wnd ) {
+	Lists.Delete( wnd->referenceList );
+	DestroyWindow( GetHWND( wnd ) );
+	free( wnd->lout );
+	free( wnd );
+}
+
 void destroy_SbBasicWindow( sbWnd *wnd ) {
 	if ( wnd == NULL )
 		return;
 
-	Lists.Delete( wnd->referenceList );
-	DestroyWindow( GetHWND( wnd ) );
-	free( wnd->dims );
-	free( wnd );
+	sbWndCommonDestructor( wnd );
 }
 
 void destroy_SbTextbox( sbWnd *wnd ) {
 	if ( wnd == NULL )
 		return;
 
-	Lists.Delete( wnd->referenceList );
-	DestroyWindow( GetHWND( wnd ) );
 	sbWnd_DeleteTextboxInfo( wnd->specific );
-	free( wnd->dims );
-	free( wnd );
+	sbWndCommonDestructor( wnd );
 }
 
 void destroy_SbBasicTextWindow( sbWnd *wnd ) {
 	if ( wnd == NULL )
 		return;
 	
-	Lists.Delete( wnd->referenceList );
-	DestroyWindow( GetHWND( wnd ) );
 	sbWnd_DeleteBasicTextWindowInfo( wnd->specific );
-	free( wnd->dims );
-	free( wnd );
+	sbWndCommonDestructor( wnd );
 }
 
 void destroy_SbClickableWindow( sbWnd *wnd ) {
 	if ( wnd == NULL )
 		return;
 	
-	Lists.Delete( wnd->referenceList );
-	DestroyWindow( GetHWND( wnd ) );
 	sbWnd_DeleteClickableWindowInfo( wnd->specific );
-	free( wnd->dims );
-	free( wnd );
+	sbWndCommonDestructor( wnd );
 }
 
 void destroy_SbRestrictedImageWindow( sbWnd *wnd ) {
 	if ( wnd == NULL )
 		return;
 	
-	Lists.Delete( wnd->referenceList );
-	DestroyWindow( GetHWND( wnd ) );
 	sbWnd_DeleteRestrictedImageWindowInfo( wnd->specific );
-	free( wnd->dims );
-	free( wnd );
+	sbWndCommonDestructor( wnd );
 }
 
 void destroy_SbMasterWindow( sbWnd *wnd ) {
 	if ( wnd == NULL )
 		return;
 	
-	Lists.Delete( wnd->referenceList );
-	DestroyWindow( GetHWND( wnd ) );
-	free( wnd->dims );
-	free( wnd );
+	sbWndCommonDestructor( wnd );
 }
 
 void destroy_SbViewcmdMasterWindow( sbWnd *wnd ) {
 	if ( wnd == NULL )
 		return;
 	
-	Lists.Delete( wnd->referenceList );
-	DestroyWindow( GetHWND( wnd ) );
-	free( wnd->dims );
-	free( wnd );
+	sbWndCommonDestructor( wnd );
 }
 
 void destroy_SbStringWindow( sbWnd *wnd ) {
 	if ( wnd == NULL )
 		return;
 	
-	Lists.Delete( wnd->referenceList );
-	DestroyWindow( GetHWND( wnd ) );
 	sbWnd_DeleteStringWindowInfo( wnd->specific );
-	free( wnd->dims );
-	free( wnd );
+	sbWndCommonDestructor( wnd );
 }
 
 void destroy_SbProgressBarWindow( sbWnd *wnd ) {
 	if ( wnd == NULL )
 		return;
 	
-	Lists.Delete( wnd->referenceList );
-	DestroyWindow( GetHWND( wnd ) );
 	sbWnd_DeleteProgressBarWindowInfo( wnd->specific );
-	free( wnd->dims );
-	free( wnd );
+	sbWndCommonDestructor( wnd );
 }
 
 void destroy_SbDldcmdMasterWindow( sbWnd *wnd ) {
 	if ( wnd == NULL )
 		return;
 	
-	Lists.Delete( wnd->referenceList );
-	DestroyWindow( GetHWND( wnd ) );
-	free( wnd->dims );
-	free( wnd );
+	sbWndCommonDestructor( wnd );
 }
 
 void destroy_SbVScrollbarWindow( sbWnd *wnd ) {
 	if ( wnd == NULL )
 		return;
 	
-	Lists.Delete( wnd->referenceList );
-	DestroyWindow( GetHWND( wnd ) );
 	sbWnd_DeleteVScrollbarWindowInfo( wnd->specific );
-	free( wnd->dims );
-	free( wnd );
+	sbWndCommonDestructor( wnd );
 }
 
 void sbWnd_DeleteTextboxInfo( SBTextboxInfo *info ) {

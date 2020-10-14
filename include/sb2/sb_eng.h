@@ -54,13 +54,9 @@ typedef struct sbcmddldsession {
 		*numList,
 		**windows;
 
-	sbWnd_Dims
+	sbWnd_Layout
 		*fscreen,
 		*nfscreen;
-
-	uint8_t
-		fscreenType,
-		nfscreenType;
 
 	int fscreenOn;
 	uint16_t idx;
@@ -185,13 +181,9 @@ typedef struct sbcmdnumsession {
 		*currentPgs,
 		**windows;
 
-	sbWnd_Dims
+	sbWnd_Layout
 		*fscreen,
 		*nfscreen;
-
-	uint8_t
-		fscreenType,
-		nfscreenType;
 
 	int fscreenOn;
 	uint16_t idx;

@@ -121,10 +121,10 @@ void numCmdProc( sbWnd *wnd, void *msg ) {
 			ses->fscreenOn = !ses->fscreenOn;
 			if ( ses->fscreenOn ) {
 				sbWnd *parent = SBWindows.getParent( wnd );
-				SBWindows.changeDims( parent, ses->fscreenType, ses->fscreen );
+				SBWindows.changeLayout( parent, ses->fscreen );
 				SBWindows.toSurface( parent );
 			} else
-				SBWindows.changeDims( SBWindows.getParent( wnd ), ses->nfscreenType, ses->nfscreen );
+				SBWindows.changeLayout( SBWindows.getParent( wnd ), ses->nfscreen );
 			
 			EngineOps.NumCmd.showWindows( ses );
 			break;
@@ -132,12 +132,11 @@ void numCmdProc( sbWnd *wnd, void *msg ) {
 
 		case SBEVT_CLOSE: {
 			sbWnd *p = SBWindows.getParent( wnd );
-			sbWnd_Dims d = { 0 };
-			uint8_t dt = ses->nfscreenType;
-			memcpy( &d, ses->nfscreen, sizeof( sbWnd_Dims ) );
+			sbWnd_Layout d = { 0 };
+			memcpy( &d, ses->nfscreen, sizeof( sbWnd_Layout ) );
 			Commands.Number.End( ses );
 			if ( ses->fscreenOn )
-				SBWindows.changeDims( p, dt, &d );
+				SBWindows.changeLayout( p, &d );
 			break;
 		}
 	}
@@ -194,10 +193,10 @@ void dldCmdProc( sbWnd *wnd, void *msg ) {
 			ses->fscreenOn = !ses->fscreenOn;
 			if ( ses->fscreenOn ) {
 				sbWnd *parent = SBWindows.getParent( wnd );
-				SBWindows.changeDims( parent, ses->fscreenType, ses->fscreen );
+				SBWindows.changeLayout( parent, ses->fscreen );
 				SBWindows.toSurface( parent );
 			} else
-				SBWindows.changeDims( SBWindows.getParent( wnd ), ses->nfscreenType, ses->nfscreen );
+				SBWindows.changeLayout( SBWindows.getParent( wnd ), ses->nfscreen );
 			
 			EngineOps.DldCmd.showWindows( ses );
 			break;
@@ -205,12 +204,11 @@ void dldCmdProc( sbWnd *wnd, void *msg ) {
 
 		case SBEVT_D_CLOSE: {
 			sbWnd *p = SBWindows.getParent( wnd );
-			sbWnd_Dims d = { 0 };
-			uint8_t dt = ses->nfscreenType;
-			memcpy( &d, ses->nfscreen, sizeof( sbWnd_Dims ) );
+			sbWnd_Layout d = { 0 };
+			memcpy( &d, ses->nfscreen, sizeof( sbWnd_Layout ) );
 			Commands.Download.Ses.End( ses );
 			if ( ses->fscreenOn )
-				SBWindows.changeDims( p, dt, &d );
+				SBWindows.changeLayout( p, &d );
 			break;
 		}
 

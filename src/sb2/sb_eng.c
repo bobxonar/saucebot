@@ -134,86 +134,45 @@ void sbCmd_Number( sbWnd *viewer, sbWnd *logger, wchar_t *text ) {
 	sbList *pgsPerNum =  Commands.Number.CopyDownloads( numList );
 
 	// Set up windows and bind functions to said windows.
-	sbWnd_Dims dims = { 0 };
+	sbWnd_Layout lout = { 0 };
 
 	// Master window
-	dims.floatDims[2] = 1.0f;
-	dims.floatDims[3] = 1.0f;
+	lout.parent = viewer;
+	lout.type = SB_DIMTYPE_IIFF_TL_SRNN;
+	lout.dims.floatDims[2] = 1.0f;
+	lout.dims.floatDims[3] = 1.0f;
 
-	sbWnd *viewMaster = SBViewcmdMasterWindows.create(
-		GetHWND( viewer ),
-		L"Viewer master window",
-		SB_DIMTYPE_IIFF_TL,
-		&dims
-	);
+	sbWnd *viewMaster = SBViewcmdMasterWindows.create( L"Viewer master window", &lout );
 
 	// Number switcher left arrow
-	dims.floatDims[0] = SB_CENTER_DIM( 0.4f );
-	dims.intDims[2] = 0;
-	dims.intDims[3] = 0;
+	lout.parent = viewMaster;
+	lout.type = SB_DIMTYPE_FIII_TL_SRNN;
+	lout.dims.floatDims[0] = SB_CENTER_DIM( 0.4f );
 
-	sbWnd *lArrow = SBStringWindows.create(
-		GetHWND( viewMaster ),
-		L"Left arrow(number switching)",
-		SB_DIMTYPE_FIII_TL,
-		&dims,
-		L"<",
-		15,
-		1
-	);
+	sbWnd *lArrow = SBStringWindows.create( L"left arrow 1", &lout, L"<", 15, 1 );
 
 	// Number switcher right arrow
-	dims.floatDims[0] = SB_CENTER_DIM( 0.6f );
+	lout.dims.floatDims[0] = SB_CENTER_DIM( 0.6f );
 
-	sbWnd *rArrow = SBStringWindows.create(
-		GetHWND( viewMaster ),
-		L"Right arrow(number switching)",
-		SB_DIMTYPE_FIII_TL,
-		&dims,
-		L">",
-		15,
-		1
-	);
+	sbWnd *rArrow = SBStringWindows.create( L"right arrow 1", &lout, L">", 15, 1 );
 
 	// Close button
-	dims.intDims[0] = 0;
+	lout.dims.intDims[0] = 0;
+	lout.type = SB_DIMTYPE_IIII_TR_SRNN;
 
-	sbWnd *closeButton = SBStringWindows.create(
-		GetHWND( viewMaster ),
-		L"close button",
-		SB_DIMTYPE_IIII_TR,
-		&dims,
-		L"Close",
-		15,
-		1
-	);
+	sbWnd *closeButton = SBStringWindows.create( L"close button", &lout, L"Close", 15, 1 );
 
 	// Fullscreen button
-	dims.floatDims[0] = 0.0f;
+	lout.type = SB_DIMTYPE_IIII_TL_SRNN;
 
-	sbWnd *fscreenButton = SBStringWindows.create(
-		GetHWND( viewMaster ),
-		L"fullscreen button",
-		SB_DIMTYPE_FIII_TL,
-		&dims,
-		L"Fullscreen",
-		15,
-		1
-	);
+	sbWnd *fscreenButton = SBStringWindows.create( L"fullscreen button", &lout, L"Fullscreen", 15, 1 );
 
 	// Loading symbol
-	dims.floatDims[0] = SB_CENTER_DIM( 0.5f );
-	dims.floatDims[1] = SB_CENTER_DIM( 0.5f );
+	lout.dims.floatDims[0] = SB_CENTER_DIM( 0.5f );
+	lout.dims.floatDims[1] = SB_CENTER_DIM( 0.5f );
+	lout.type = SB_DIMTYPE_FFII_TL_SRNN;
 
-	sbWnd *load = SBStringWindows.create(
-		GetHWND( viewMaster ),
-		L"load",
-		SB_DIMTYPE_FFII_TL,
-		&dims,
-		L"Loading...",
-		15,
-		0
-	);
+	sbWnd *load = SBStringWindows.create( L"load", &lout, L"Loading...", 15, 0 );
 
 	SBWindows.setSignalFn( viewMaster, numCmdProc );
 	SBWindows.setSignalFn( lArrow, SbNumCmdEvents.prevNum );
@@ -228,7 +187,7 @@ void sbCmd_Number( sbWnd *viewer, sbWnd *logger, wchar_t *text ) {
 
 	sbCmd_Number_Session *ses = Commands.Number.Begin( viewMaster, numList, pgsPerNum );
 	Lists.Delete( pgsPerNum );
-	SBStringWindows.destroy( load );
+	SBWindows.destroy( load );
 	SBWindows.appendReference( viewMaster, ses );
 
 	Commands.Number.CreateWindows( ses );
@@ -295,14 +254,18 @@ sbCmd_Number_Session *Begin_SbCommand_Number( sbWnd *master, sbList *nlist, sbLi
 		ses->tDownloads[i].nPgs = ( uint64_t )Lists.Get( pgsDld, i );
 	}
 
-	ses->fscreen = newptr( sbWnd_Dims );
-	ses->nfscreen = newptr( sbWnd_Dims );
+	sbWnd_Layout *fscreen = newptr( sbWnd_Layout );
+	ses->nfscreen = newptr( sbWnd_Layout );
 	
-	ses->fscreen->floatDims[2] = 1.0f;
-	ses->fscreen->floatDims[3] = 1.0f;
-	ses->fscreenType = SB_DIMTYPE_IIFF_TL;
+	fscreen->parent = SBWindows.getParent(
+		SBWindows.getParent( master )
+	);
+	fscreen->dims.floatDims[2] = 1.0f;
+	fscreen->dims.floatDims[3] = 1.0f;
+	fscreen->type = SB_DIMTYPE_IIFF_TL_SRNN;
+	ses->fscreen = fscreen;
 
-	SBWindows.getDims( SBWindows.getParent( master ), &ses->nfscreenType, ses->nfscreen );
+	SBWindows.getLayout( SBWindows.getParent( master ), ses->nfscreen );
 
 	for ( int i = 0; i < nCt; ++i )
 		if ( ses->tDownloads[i].nPgs == 0 && !SaucebotMaster.offlineMode )
@@ -427,87 +390,48 @@ wchar_t *getImagePath_SbEngine_NumCmd( wchar_t *num, uint16_t pg ) {
 void CreateWindows_SbCommand_Number( sbCmd_Number_Session *ses ) {
 	SBWindows.setCreateMode( SBWND_CREATEMODE_HIDE );
 	for ( uint16_t i = 0; i < Lists.Size( ses->numList ); ++i ) {
-		sbWnd_Dims dims = { 0 };
+		sbWnd_Layout lout = { 0 };
 
 		// Number window
-		dims.floatDims[0] = SB_CENTER_DIM( 0.5f );
+		lout.parent = ses->sessionParent;
+		lout.dims.floatDims[0] = SB_CENTER_DIM( 0.5f );
+		lout.type = SB_DIMTYPE_FIII_TL_SRNN;
 
-		sbWnd *num = SBStringWindows.create(
-			GetHWND( ses->sessionParent ),
-			L"name",
-			SB_DIMTYPE_FIII_TL,
-			&dims,
-			Lists.Get( ses->numList, i ),
-			15,
-			0
-		);
+		sbWnd *num = SBStringWindows.create( L"name", &lout, Lists.Get( ses->numList, i ), 15, 0 );
 		
 		// Center image window
-		dims.floatDims[1] = 0.05f;
-		dims.floatDims[2] = 0.9f;
-		dims.floatDims[3] = 0.9f;
+		lout.dims.floatDims[0] = SB_CENTER_DIM( 0.5f );
+		lout.dims.floatDims[1] = 0.05f;
+		lout.dims.floatDims[2] = 0.9f;
+		lout.dims.floatDims[3] = 0.9f;
+		lout.type = SB_DIMTYPE_FFFF_TL_SRNN;
 
-		sbWnd *imgWnd = SBRestrictedImageWindows.create(
-			GetHWND( ses->sessionParent ),
-			L"image",
-			SB_DIMTYPE_FFFF_TL,
-			&dims,
-			NULL
-		);
+		sbWnd *imgWnd = SBRestrictedImageWindows.create( L"image", &lout, NULL );
 
 		// Left Arrow
-		dims.floatDims[0] = SB_CENTER_DIM( 0.4f );
-		dims.intDims[1] = 0;
-		dims.intDims[2] = 0;
-		dims.intDims[3] = 0;
+		lout.dims.floatDims[0] = SB_CENTER_DIM( 0.4f );
+		lout.dims.intDims[1] = 0;
+		lout.dims.intDims[2] = 0;
+		lout.dims.intDims[3] = 0;
+		lout.type = SB_DIMTYPE_FIII_BL_SRNN;
 
-		sbWnd *lArrow = SBStringWindows.create(
-			GetHWND( ses->sessionParent ),
-			L"name",
-			SB_DIMTYPE_FIII_BL,
-			&dims,
-			L"<",
-			15,
-			1
-		);
+		sbWnd *lArrow = SBStringWindows.create( L"name", &lout, L"<", 15, 1 );
 
 		// Right Arrow
-		dims.floatDims[0] = SB_CENTER_DIM( 0.6f );
+		lout.dims.floatDims[0] = SB_CENTER_DIM( 0.6f );
 
-		sbWnd *rArrow = SBStringWindows.create(
-			GetHWND( ses->sessionParent ),
-			L"name",
-			SB_DIMTYPE_FIII_BL,
-			&dims,
-			L">",
-			15,
-			1
-		);
+		sbWnd *rArrow = SBStringWindows.create( L"name", &lout, L">", 15, 1 );
 
 		// Page counter window
-		dims.floatDims[0] = SB_CENTER_DIM( 0.5f );
+		lout.dims.floatDims[0] = SB_CENTER_DIM( 0.5f );
 
-		sbWnd *pages = SBStringWindows.create(
-			GetHWND( ses->sessionParent ),
-			L"page counter",
-			SB_DIMTYPE_FIII_BL,
-			&dims,
-			L"0 of 0",
-			15,
-			0
-		);
+		sbWnd *pages = SBStringWindows.create( L"page counter", &lout, L"0 of 0", 15, 0 );
 
-		dims.intDims[0] = 0;
+		// Status bar
+		lout.dims.intDims[0] = 0;
+		lout.type = SB_DIMTYPE_IIII_BR_SRNN;
 
-		sbWnd *status = SBStringWindows.create(
-			GetHWND( ses->sessionParent ),
-			L"status bar",
-			SB_DIMTYPE_IIII_BR,
-			&dims,
-			L"Downloaded: 0/0",
-			15,
-			0
-		);
+		sbWnd *status = SBStringWindows.create( L"status bar", &lout, L"Downloaded: 0/0", 15, 0	);
 
 		SBWindows.setSignalFn( lArrow, SbNumCmdEvents.prevPage );
 		SBWindows.setSignalFn( rArrow, SbNumCmdEvents.nextPage );
@@ -565,14 +489,7 @@ void End_SbCommand_Number( sbCmd_Number_Session *ses ) {
 		sbList *windowList = ses->windows[i];
 		for ( uint16_t j = 0; j < Lists.Size( windowList ); ++j ) {
 			sbWnd *wnd = Lists.Get( windowList, j );
-			switch( SBWindows.getType( wnd ) ) {
-				case STRING_WINDOW:
-					SBStringWindows.destroy( wnd );
-					break;
-				case RESTRICTED_IMAGE_WINDOW:
-					SBRestrictedImageWindows.destroy( wnd );
-					break;
-			}
+			SBWindows.destroy( wnd );
 		}
 		Lists.Delete( windowList );
 	}
@@ -582,7 +499,7 @@ void End_SbCommand_Number( sbCmd_Number_Session *ses ) {
 	Lists.Delete( ses->numList );
 	free( ses->fscreen );
 	free( ses->nfscreen );
-	SBViewcmdMasterWindows.destroy( ses->sessionParent );
+	SBWindows.destroy( ses->sessionParent );
 
 	// Signal dowloader threads to end
 	for ( uint16_t i = 0; i < Lists.Size( SaucebotMaster.threadHandleList ); ++i )
@@ -628,6 +545,8 @@ void finish_SbEngine_TDownload( void *data ) { // Used with _beginthread ONLY!
 		wchar_t status[32] = { 0 };
 		swprintf( status, 32, L"Downloaded: %d/%d", dld->nPgs, dld->tPgs );
 		SBStringWindows.changeString( wnd, status );
+
+		
 
 		#ifdef PRINT_ERROR
 		printf( "Signal: %d\n", dld->signal );
@@ -706,60 +625,39 @@ void sbCmd_Download( sbWnd *viewer, sbWnd *logger, wchar_t *text ) {
 		
 		if ( !v ) {
 			// Create windows and call msgloop(), nothing has happened yet
-			sbWnd_Dims dims = { 0 };
+			sbWnd_Layout lout = { 0 };
 
-			dims.floatDims[0] = SB_CENTER_DIM( 0.5f );
-			dims.intDims[1] = SB_CENTER_DIM( 150 );
-			dims.intDims[2] = 600;
-			dims.intDims[3] = 19;
+			lout.parent = viewer;
+			lout.type = SB_DIMTYPE_FIII_TL_SRNN;
+			lout.dims.floatDims[0] = SB_CENTER_DIM( 0.5f );
+			lout.dims.intDims[1] = SB_CENTER_DIM( 150 );
+			lout.dims.intDims[2] = 600;
+			lout.dims.intDims[3] = 19;
 
-			inputBox = SBTextboxes.create(
-				GetHWND( viewer ),
-				L"path input box",
-				SB_DIMTYPE_FIII_TL,
-				&dims,
-				0
-			);
+			inputBox = SBTextboxes.create( L"Input box", &lout, 0 );
 
-			dims.intDims[1] = SB_CENTER_DIM( 130 );
-			dims.intDims[2] = 0;
-			dims.intDims[3] = 0;
+			lout.dims.floatDims[0] = SB_CENTER_DIM( 0.5f );
+			lout.dims.intDims[1] = SB_CENTER_DIM( 130 );
 
 			prompt = SBStringWindows.create( 
-				GetHWND( viewer ),
-				L"path input prompt",
-				SB_DIMTYPE_FIII_TL,
-				&dims,
-				L"Enter an absolute path for permanant downloads:",
-				15,
-				0
+				L"path input prompt", &lout,
+				L"Enter an absolute path for permanant downloads:", 15, 0
 			);
 
-			dims.intDims[1] = SB_CENTER_DIM( 170 );
+			lout.dims.intDims[1] = SB_CENTER_DIM( 170 );
 
 			SBWindows.setCreateMode( SBWND_CREATEMODE_HIDE );
 			invalid = SBStringWindows.create(
-				GetHWND( viewer ),
-				L"invalidation window",
-				SB_DIMTYPE_FIII_TL,
-				&dims,
-				L"Placeholder fail string",
-				15,
-				0
+				L"invalidation window", &lout,
+				L"Placeholder fail string", 15, 0
 			);
 			SBWindows.setCreateMode( SBWND_CREATEMODE_SHOW );
 
-			dims.intDims[0] = 0;
-			dims.intDims[1] = 0;
-			close = SBStringWindows.create(
-				GetHWND( viewer ),
-				L"close",
-				SB_DIMTYPE_IIII_TR,
-				&dims,
-				L"Close",
-				15,
-				1
-			);
+			lout.dims.intDims[0] = 0;
+			lout.dims.intDims[1] = 0;
+			lout.type = SB_DIMTYPE_IIII_TR_SRNN;
+
+			close = SBStringWindows.create( L"close", &lout, L"Close", 15, 1 );
 
 			SBWindows.appendReference( close, jmp );
 			SBWindows.appendReference( inputBox, jmp ); // ref 0
@@ -772,16 +670,16 @@ void sbCmd_Download( sbWnd *viewer, sbWnd *logger, wchar_t *text ) {
 
 		} else if ( v == 1 ) {
 			// Destroy windows, setjmp returned again
-			SBTextboxes.destroy( inputBox );
-			SBStringWindows.destroy( prompt );
-			SBStringWindows.destroy( invalid );
-			SBStringWindows.destroy( close );
+			SBWindows.destroy( inputBox );
+			SBWindows.destroy( prompt );
+			SBWindows.destroy( invalid );
+			SBWindows.destroy( close );
 		} else {
 			// Destroy windows, setjmp returned again and the close button was pressed.
-			SBTextboxes.destroy( inputBox );
-			SBStringWindows.destroy( prompt );
-			SBStringWindows.destroy( invalid );
-			SBStringWindows.destroy( close );
+			SBWindows.destroy( inputBox );
+			SBWindows.destroy( prompt );
+			SBWindows.destroy( invalid );
+			SBWindows.destroy( close );
 			SaucebotMaster.cmdOn = 0;
 			return;
 		}
@@ -803,18 +701,15 @@ void sbCmd_Download( sbWnd *viewer, sbWnd *logger, wchar_t *text ) {
 	sbCmd_Download_Session *ses;
 	sbWnd *loading;
 	{
-		sbWnd_Dims dims = { 0 };
-		dims.floatDims[0] = SB_CENTER_DIM( 0.5f );
-		dims.floatDims[1] = SB_CENTER_DIM( 0.5f );
+		sbWnd_Layout lout = { 0 };
+		lout.parent = viewer;
+		lout.type = SB_DIMTYPE_FFII_TL_SRNN;
+		lout.dims.floatDims[0] = SB_CENTER_DIM( 0.5f );
+		lout.dims.floatDims[1] = SB_CENTER_DIM( 0.5f );
 
 		loading = SBStringWindows.create(
-			GetHWND( viewer ),
-			L"loading",
-			SB_DIMTYPE_FFII_TL,
-			&dims,
-			L"Loading...",
-			15,
-			0
+			L"loading", &lout,
+			L"Loading...", 15, 0
 		);
 	}
 
@@ -822,7 +717,7 @@ void sbCmd_Download( sbWnd *viewer, sbWnd *logger, wchar_t *text ) {
 		ses = Commands.Download.Ses.Begin( viewer, numList );
 		Commands.Download.Ses.InitCoverFolders( ses );
 
-		SBStringWindows.destroy( loading );
+		SBWindows.destroy( loading );
 
 		Commands.Download.Ses.CreateStaticWindows( ses );
 		Commands.Download.Ses.CreateDynamicWindows( ses );
@@ -1093,30 +988,29 @@ void finish_SbEngine_PDownload( void *data ) { // Used with _beginthread() ONLY!
 
 sbCmd_Download_Session *Begin_SbCommand_Download_Ses( sbWnd *viewMaster, sbList *nlist ) {
 	sbCmd_Download_Session *ses = newptr( sbCmd_Download_Session );
-	sbWnd_Dims fscDims = { 0 };
-	fscDims.floatDims[2] = 1.0f;
-	fscDims.floatDims[3] = 1.0f;
 
-	ses->fscreen = newptr( sbWnd_Dims );
-	memcpy( ses->fscreen, &fscDims, sizeof( sbWnd_Dims ) );
-	ses->fscreenType = SB_DIMTYPE_IIFF_TL;
+	ses->nfscreen = newptr( sbWnd_Layout );
+	SBWindows.getLayout( viewMaster, ses->nfscreen );
 
-	ses->nfscreen = newptr( sbWnd_Dims );
-	SBWindows.getDims( viewMaster, &ses->nfscreenType, ses->nfscreen );
+	sbWnd_Layout fscDims = { 0 };
+	fscDims.dims.floatDims[2] = 1.0f;
+	fscDims.dims.floatDims[3] = 1.0f;
+	fscDims.type = SB_DIMTYPE_IIFF_TL_SRNN;
+	fscDims.parent = ses->nfscreen->parent;
+
+	ses->fscreen = newptr( sbWnd_Layout );
+	memcpy( ses->fscreen, &fscDims, sizeof( sbWnd_Layout ) );
 
 	// Session master
 	sbWnd *dldmaster;
 	{
-		sbWnd_Dims dims = { 0 };
-		dims.floatDims[2] = 1.0f;
-		dims.floatDims[3] = 1.0f;
+		sbWnd_Layout lout = { 0 };
+		lout.parent = viewMaster;
+		lout.type = SB_DIMTYPE_IIFF_TL_SRNN;
+		lout.dims.floatDims[2] = 1.0f;
+		lout.dims.floatDims[3] = 1.0f;
 
-		dldmaster = SBDldcmdMasterWindows.create(
-			GetHWND( viewMaster ),
-			L"dldmaster",
-			SB_DIMTYPE_IIFF_TL,
-			&dims
-		);
+		dldmaster = SBDldcmdMasterWindows.create( L"dldmaster", &lout );
 	}
 
 	ses->sessionParent = dldmaster;
@@ -1160,74 +1054,55 @@ void InitCoverFolders_SbCommand_Download_Ses( sbCmd_Download_Session *ses ) {
 void CreateStaticWindows_SbCommand_Download_Ses( sbCmd_Download_Session *ses ) {
 	// windows needed
 	sbWnd
-		*parent = ses->sessionParent, // parent, windows to be created are listed below
 		*fscreenButton,
 		*lArrow,
 		*rArrow,
 		*closeButton;
 	// dimension struct
-	sbWnd_Dims dims = { 0 };
+	sbWnd_Layout lout = { 0 };
+	lout.parent = ses->sessionParent;
 
 	// Fullscreen button
-	dims.floatDims[0] = 0.0f; // Does nothing, just idiomatic
+	lout.dims.intDims[0] = 0; // Does nothing, just idiomatic
+	lout.type = SB_DIMTYPE_IIII_TL_SRNN;
+
 	fscreenButton = SBStringWindows.create(
-		GetHWND( parent ),
-		L"fscreen-button",
-		SB_DIMTYPE_FIII_TL,
-		&dims,
-		L"Fullscreen",
-		15,
-		1
+		L"fscreen-button", &lout,
+		L"Fullscreen", 15, 1
 	);
 
 	// lArrow
-	dims.floatDims[0] = SB_CENTER_DIM( 0.4f );
-	lArrow = SBStringWindows.create(
-		GetHWND( parent ),
-		L"lArrow",
-		SB_DIMTYPE_FIII_TL,
-		&dims,
-		L"<",
-		15,
-		1
-	);
+	lout.dims.floatDims[0] = SB_CENTER_DIM( 0.4f );
+	lout.type = SB_DIMTYPE_FIII_TL_SRNN;
+
+	lArrow = SBStringWindows.create( L"lArrow", &lout, L"<", 15, 1 );
 
 	// rArrow
-	dims.floatDims[0] = SB_CENTER_DIM( 0.6f );
-	rArrow = SBStringWindows.create(
-		GetHWND( parent ),
-		L"rArrow",
-		SB_DIMTYPE_FIII_TL,
-		&dims,
-		L">",
-		15,
-		1
-	);
+	lout.dims.floatDims[0] = SB_CENTER_DIM( 0.6f );
+
+	rArrow = SBStringWindows.create( L"rArrow", &lout, L">", 15, 1 );
 
 	// close button
-	dims.intDims[0] = 0;
+	lout.dims.intDims[0] = 0;
+	lout.type = SB_DIMTYPE_IIII_TR_SRNN;
+
 	closeButton = SBStringWindows.create(
-		GetHWND( parent ),
-		L"close-button",
-		SB_DIMTYPE_IIII_TR,
-		&dims,
-		L"Close",
-		15,
-		1
+		L"close-button", &lout,
+		L"Close", 15, 1
 	);
 
 	// Function binding and reference appending
-	SBWindows.appendReference( fscreenButton, parent );
-	SBWindows.appendReference( lArrow, parent );
-	SBWindows.appendReference( rArrow, parent );
-	SBWindows.appendReference( closeButton, parent );
-	SBWindows.appendReference( parent, ses );
+	SBWindows.appendReference( fscreenButton, ses->sessionParent );
+	SBWindows.appendReference( lArrow, ses->sessionParent );
+	SBWindows.appendReference( rArrow, ses->sessionParent );
+	SBWindows.appendReference( closeButton, ses->sessionParent );
+	SBWindows.appendReference( ses->sessionParent, ses );
 
 	SBWindows.setSignalFn( fscreenButton, SbDldCmdEvents.fullscreen );
 	SBWindows.setSignalFn( lArrow, SbDldCmdEvents.prevNum );
 	SBWindows.setSignalFn( rArrow, SbDldCmdEvents.nextNum );
 	SBWindows.setSignalFn( closeButton, SbDldCmdEvents.close );
-	SBWindows.setSignalFn( parent, dldCmdProc );
+	SBWindows.setSignalFn( ses->sessionParent, dldCmdProc );
 }
 
 void CreateDynamicWindows_SbCommand_Download_Ses( sbCmd_Download_Session *ses ) {
@@ -1235,54 +1110,39 @@ void CreateDynamicWindows_SbCommand_Download_Ses( sbCmd_Download_Session *ses ) 
 	for ( uint16_t i = 0; i < Lists.Size( ses->numList ); ++i ) {
 		wchar_t *n = Lists.Get( ses->numList, i );
 		sb_PermDownload *dld = ses->pDownloads + i;
-		sbWnd_Dims dims = { 0 };
+		sbWnd_Layout lout = { 0 };
 
 		sbWnd
-			*top = ses->sessionParent,
 			*numWnd,
 			*coverImgWnd,
 			*infoBox,
 			*progStr,
 			*progBar,
 			*progMsg;
+
+		lout.parent = ses->sessionParent;
 		
 		// Number window
-		dims.floatDims[0] = SB_CENTER_DIM( 0.5f );
-		numWnd = SBStringWindows.create(
-			GetHWND( top ),
-			L"numWnd",
-			SB_DIMTYPE_FIII_TL,
-			&dims,
-			n,
-			15,
-			0
-		);
+		lout.dims.floatDims[0] = SB_CENTER_DIM( 0.5f );
+		lout.type = SB_DIMTYPE_FIII_TL_SRNN;
+		numWnd = SBStringWindows.create( L"numWnd", &lout, n, 15, 0 );
 
 		// Cover window
-		dims.intDims[0] = 0;
-		dims.floatDims[1] = SB_CENTER_DIM( 0.45f );
-		dims.floatDims[2] = 0.5f;
-		dims.floatDims[3] = 0.75f;
+		lout.dims.intDims[0] = 0;
+		lout.dims.floatDims[1] = SB_CENTER_DIM( 0.45f );
+		lout.dims.floatDims[2] = 0.5f;
+		lout.dims.floatDims[3] = 0.75f;
+		lout.type = SB_DIMTYPE_IFFF_TL_SRNN;
 
 		wchar_t path[ MAX_PATH ] = { 0 };
 		swprintf( path, MAX_PATH, L"Covers\\%s\\cover.jpg", n );
 
-		coverImgWnd = SBRestrictedImageWindows.create(
-			GetHWND( top ),
-			L"coverImgWnd",
-			SB_DIMTYPE_IFFF_TL,
-			&dims,
-			path
-		);
+		coverImgWnd = SBRestrictedImageWindows.create( L"coverImgWnd", &lout, path );
 
-		// Info box
-		infoBox = SBBasicTextWindows.create(
-			GetHWND( top ),
-			L"infoBox",
-			SB_DIMTYPE_IFFF_TR,
-			&dims,
-			15
-		);
+		// info box
+		lout.type = SB_DIMTYPE_IFFF_TR_SRNN;
+
+		infoBox = SBBasicTextWindows.create( L"infoBox", &lout, 15 );
 
 		// Title/artist/tags
 		{
@@ -1302,53 +1162,31 @@ void CreateDynamicWindows_SbCommand_Download_Ses( sbCmd_Download_Session *ses ) 
 		}
 
 		// Progress string
-		dims.floatDims[0] = SB_CENTER_DIM( 0.5f );
-		dims.intDims[1] = 50;
-		dims.intDims[2] = 0;
-		dims.intDims[3] = 0;
+		lout.dims.floatDims[0] = SB_CENTER_DIM( 0.5f );
+		lout.dims.intDims[1] = 50;
 
 		progStr = SBStringWindows.create(
-			GetHWND( top ),
-			L"progStr",
-			SB_DIMTYPE_FIII_BL,
-			&dims,
-			L"Progress",
-			15,
-			0
+			L"progStr", &lout,
+			L"Progress", 15, 0
 		);
 
 		// Progress bar
-		dims.floatDims[0] = SB_CENTER_DIM( 0.5f );
-		dims.intDims[1] = 25;
-		dims.floatDims[2] = 0.8f;
-		dims.intDims[3] = 18;
+		lout.dims.floatDims[0] = SB_CENTER_DIM( 0.5f );
+		lout.dims.intDims[1] = 25;
+		lout.dims.floatDims[2] = 0.8f;
+		lout.dims.intDims[3] = 18;
+		lout.type = SB_DIMTYPE_FIFI_BL_SRNN;
 
-		progBar = SBProgressBarWindows.create(
-			GetHWND( top ),
-			L"progBar",
-			SB_DIMTYPE_FIFI_BL,
-			&dims,
-			dld->tPgs
-		);
+		progBar = SBProgressBarWindows.create( L"progBar", &lout, dld->tPgs );
 
 		// Progress message
-		dims.floatDims[0] = SB_CENTER_DIM( 0.5f );
-		dims.intDims[1] = 0;
-		dims.intDims[2] = 0;
-		dims.intDims[3] = 0;
+		lout.dims.floatDims[0] = SB_CENTER_DIM( 0.5f );
+		lout.dims.intDims[1] = 0;
 
 		wchar_t progmsg[48] = { 0 };
 		swprintf( progmsg, 48, L"Downloading: 1 of %u ~ Number %s", dld->tPgs, n );
 
-		progMsg = SBStringWindows.create(
-			GetHWND( top ),
-			L"progMsg",
-			SB_DIMTYPE_FIII_BL,
-			&dims,
-			progmsg,
-			15,
-			0
-		);
+		progMsg = SBStringWindows.create( L"progMsg", &lout, progmsg, 15, 0 );
 
 		// Add all to window lists
 		Lists.Add( ses->windows[i], numWnd );
@@ -1383,20 +1221,7 @@ void End_SbCommand_Download_Ses( sbCmd_Download_Session *ses ) {
 		sbList *windowList = ses->windows[i];
 		for ( uint16_t j = 0; j < Lists.Size( windowList ); ++j ) {
 			sbWnd *wnd = Lists.Get( windowList, j );
-			switch( SBWindows.getType( wnd ) ) {
-				case STRING_WINDOW:
-					SBStringWindows.destroy( wnd );
-					break;
-				case TEXT_WINDOW:
-					SBBasicTextWindows.destroy( wnd );
-					break;
-				case PROGRESS_BAR_WINDOW:
-					SBProgressBarWindows.destroy( wnd );
-					break;
-				case RESTRICTED_IMAGE_WINDOW:
-					SBRestrictedImageWindows.destroy( wnd );
-					break;
-			}
+			SBWindows.destroy( wnd );
 		}
 		Lists.Delete( windowList );
 	}
@@ -1405,7 +1230,7 @@ void End_SbCommand_Download_Ses( sbCmd_Download_Session *ses ) {
 	Lists.Delete( ses->numList );
 	free( ses->fscreen );
 	free( ses->nfscreen );
-	SBDldcmdMasterWindows.destroy( ses->sessionParent );
+	SBWindows.destroy( ses->sessionParent );
 
 	// Signal dowloader threads to end
 	for ( uint16_t i = 0; i < Lists.Size( SaucebotMaster.threadHandleList ); ++i )
@@ -1440,80 +1265,64 @@ void sbCmd_Chconf( sbWnd *viewer, sbWnd *logger, wchar_t *text ) {
 		TBOX *pdldTbox,
 		STRWND *pdldEmsg,
 		STRWND *confirm;
-	sbWnd_Dims dims = { 0 };
+	sbWnd_Layout lout = { 0 };
+	lout.parent = viewer;
 
 	if ( !v ) {
 		// Set up windows and call another msgloop, nothing has happened yet.
 
 		// "Configuration Editor" message
-		dims.floatDims[0] = SB_CENTER_DIM( 0.5f );
+		lout.dims.floatDims[0] = SB_CENTER_DIM( 0.5f );
+		lout.type = SB_DIMTYPE_FIII_TL_SRNN;
 		confTitle = SBStringWindows.create(
-			GetHWND( viewer ),
-			L"confTitle",
-			SB_DIMTYPE_FIII_TL,
-			&dims,
-			L"Configuration Editor",
-			15,
-			0
+			L"confTitle", &lout,
+			L"Configuration Editor", 15, 0
 		);
 
 		// "Permanant download path" message
-		dims.intDims[0] = 0;
-		dims.intDims[1] = SB_CENTER_DIM( 40 );
+		lout.dims.intDims[0] = 0;
+		lout.dims.intDims[1] = SB_CENTER_DIM( 40 );
 		pdldInf = SBStringWindows.create(
-			GetHWND( viewer ),
-			L"pdldInf",
-			SB_DIMTYPE_FIII_TL,
-			&dims,
-			L"Permanent download path: ",
-			15,
-			0
+			L"pdldInf", &lout,
+			L"Permanent download path: ", 15, 0
 		);
 
 		// Permanant download path textbox
-		dims.intDims[0] = 1;
-		dims.floatDims[2] = 0.7f;
-		dims.intDims[3] = 19;
-		pdldTbox = SBTextboxes.create(
-			GetHWND( viewer ),
-			L"pdldTbox",
-			SB_DIMTYPE_IIFI_TR,
-			&dims,
-			1
-		);
+
+		lout.dims.intDims[0] = 1;
+		lout.dims.intDims[1] = 0;
+		lout.dims.floatDims[2] = 0.5f;
+		lout.dims.intDims[3] = 19;
+		lout.type = SB_DIMTYPE_IIFI_TL_SRTR;
+		lout.sibling = pdldInf;
+
+		pdldTbox = SBTextboxes.create( L"pdldTbox", &lout, 1 );
+
 		wchar_t *path = EngineOps.DldCmd.getPermDldPath( );
 		SBTextboxes.sendString( pdldTbox, path );
 		free( path );
 
 		// Error message for downloads
-		dims.floatDims[0] = SB_CENTER_DIM( 0.5f );
-		dims.intDims[1] = 60;
-		dims.intDims[2] = 0;
-		dims.intDims[3] = 0;
+		lout.dims.floatDims[0] = SB_CENTER_DIM( 0.5f );
+		lout.dims.intDims[1] = 60;
+		lout.type = SB_DIMTYPE_FIII_TL_SRNN;
+		lout.sibling = NULL;
 
 		SBWindows.setCreateMode( SBWND_CREATEMODE_HIDE );
 		pdldEmsg = SBStringWindows.create(
-			GetHWND( viewer ),
-			L"pdldEmsg",
-			SB_DIMTYPE_FIII_TL,
-			&dims,
-			L"placeholder",
-			15,
-			0
+			L"pdldEmsg", &lout,
+			L"placeholder", 15, 0
 		);
 		SBWindows.setCreateMode( SBWND_CREATEMODE_SHOW );
 
 		// Confirm button
-		dims.intDims[0] = 0;
-		dims.intDims[1] = 0;
+		lout.dims.intDims[0] = 0;
+		lout.dims.intDims[1] = 0;
+		lout.type = SB_DIMTYPE_IIII_BR_SRNN;
+
 		confirm = SBStringWindows.create(
-			GetHWND( viewer ),
-			L"confirm",
-			SB_DIMTYPE_IIII_BR,
-			&dims,
-			L"Confirm",
-			15,
-			1
+			L"confirm", &lout,
+			L"Confirm", 15, 1
 		);
 
 		// Reference appending and function binding
@@ -1525,11 +1334,11 @@ void sbCmd_Chconf( sbWnd *viewer, sbWnd *logger, wchar_t *text ) {
 		msgloop( );
 	} else {
 		// setjmp returned again, destroy windows and exit
-		SBStringWindows.destroy( confTitle );
-		SBStringWindows.destroy( pdldInf );
-		SBTextboxes.destroy( pdldTbox );
-		SBStringWindows.destroy( pdldEmsg );
-		SBStringWindows.destroy( confirm );
+		SBWindows.destroy( confTitle );
+		SBWindows.destroy( pdldInf );
+		SBWindows.destroy( pdldTbox );
+		SBWindows.destroy( pdldEmsg );
+		SBWindows.destroy( confirm );
 	}
 	return;
 }

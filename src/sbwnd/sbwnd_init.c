@@ -23,36 +23,25 @@ void initGUI( void ) {
 
 void initWindowFunctions( void ) {
 	SBBasicWindows.create = BasicWindowCreator;
-	SBBasicWindows.destroy = destroy_SbBasicWindow;
 	SBTextboxes.create = TextboxCreator;
-	SBTextboxes.destroy = destroy_SbTextbox;
 	SBTextboxes.getString = getString_SbTextbox;
 	SBTextboxes.sendString = sendString_SbTextbox;
 	SBTextboxes.setEnterAction = setEnterAction_SbTextbox;
 	SBTextboxes.getEnterAction = getEnterAction_SbTextbox;
 	SBBasicTextWindows.create = BasicTextWindowCreator;
-	SBBasicTextWindows.destroy = destroy_SbBasicTextWindow;
 	SBBasicTextWindows.draw = draw_SbBasicTextWindow;
 	SBBasicTextWindows.clear = clear_SbBasicTextWindow;
 	SBClickableWindows.create = ClickableWindowCreator;
-	SBClickableWindows.destroy = destroy_SbClickableWindow;
 	SBRestrictedImageWindows.create = RestrictedImageWindowCreator;
-	SBRestrictedImageWindows.destroy = destroy_SbRestrictedImageWindow;
 	SBRestrictedImageWindows.updateImage = updateImage_SbRestrictedImageWindow;
 	SBMasterWindows.create = MasterWindowCreator;
-	SBMasterWindows.destroy = destroy_SbMasterWindow;
 	SBViewcmdMasterWindows.create = ViewcmdMasterWindowCreator;
-	SBViewcmdMasterWindows.destroy = destroy_SbViewcmdMasterWindow;
 	SBStringWindows.create = StringWindowCreator;
-	SBStringWindows.destroy = destroy_SbStringWindow;
 	SBStringWindows.changeString = changeString_SbStringWindow;
 	SBProgressBarWindows.create = ProgressBarWindowCreator;
-	SBProgressBarWindows.destroy = destroy_SbProgressBarWindow;
 	SBProgressBarWindows.advance = advance_SbProgressBarWindow;
 	SBDldcmdMasterWindows.create = DldcmdMasterWindowCreator;
-	SBDldcmdMasterWindows.destroy = destroy_SbDldcmdMasterWindow;
 	SBVScrollbarWindows.create = VScrollbarWindowCreator;
-	SBVScrollbarWindows.destroy = destroy_SbVScrollbarWindow;
 	SBVScrollbarWindows.advance = advance_SbVScrollbarWindow;
 	SBVScrollbarWindows.retreat = retreat_SbVScrollbarWindow;
 	SBVScrollbarWindows.setMaxIncrement = setMaxIncrement_SbVScrollbarWindow;
@@ -60,15 +49,17 @@ void initWindowFunctions( void ) {
 	SBVScrollbarWindows.getCurrentPos = getCurrentPos_SbVScrollbarWindow;
 	SBVScrollbarWindows.reset = reset_SbVScrollbarWindow;
 	SBVScrollbarWindows.setPos = setPos_SbVScrollbarWindow;
+	SBWindows.destroy = destroy_AllTypes;
 	SBWindows.setSignalFn = SetSignalFn_AllTypes;
 	SBWindows.appendReference = appendReference_AllTypes;
 	SBWindows.getReference = getReference_AllTypes;
 	SBWindows.getStringWidth = getStringWidth_AllTypes;
 	SBWindows.signalFn = CallSignalFn_AllTypes;
-	SBWindows.changeDims = changeDims_AllTypes;
+	SBWindows.changeLayout = changeLayout_AllTypes;
+	SBWindows.addOffset = addOffset_AllTypes;
 	SBWindows.toSurface = toSurface_AllTypes;
 	SBWindows.focus = focus_AllTypes;
-	SBWindows.getDims = getDims_AllTypes;
+	SBWindows.getLayout = getLayout_AllTypes;
 	SBWindows.getParent = getParent_AllTypes;
 	SBWindows.getID = getID_AllTypes;
 	SBWindows.getType = getType_AllTypes;
@@ -237,9 +228,10 @@ void RegisterClasses( void ) {
 }
 
 void CreateTestWindow( void ) {
-	sbWnd_Dims d = { 0 };
 	SBWindows.setCreateMode( SBWND_CREATEMODE_HIDE );
-	SbGUIMaster.testWnd = SBBasicWindows.create( NULL, L"testwindow", 0, &d );
+	sbWnd_Layout l = { 0 };
+	
+	SbGUIMaster.testWnd = SBBasicWindows.create( L"testwindow", &l );
 	SBWindows.setCreateMode( SBWND_CREATEMODE_SHOW );
 }
 
@@ -251,7 +243,7 @@ void shutdownSB( void ) {
 	DestroyAcceleratorTable( SbGUIMaster.sbAccelTable );
 	free( SbGUIMaster.WindowClassNameArray );
 	free( SbGUIMaster.currentFont );
-	SBBasicWindows.destroy( SbGUIMaster.testWnd );
+	SBWindows.destroy( SbGUIMaster.testWnd );
 	Lists.Delete( SbGUIMaster.TopLevelWindows );
 	GdiplusShutdown( SbGUIMaster.gdipToken );
 	return;

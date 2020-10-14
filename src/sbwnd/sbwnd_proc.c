@@ -632,6 +632,9 @@ LRESULT CALLBACK StringProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 
 			sbWnd *wnd = ( void * )GetWindowLongPtrW( hwnd, GWLP_USERDATA );
 			SBStringWindowInfo *info = GetSpecificHandle( wnd );
+			if ( info == NULL )
+				return 1;
+			
 			int state = info->mouseState;
 
 			HDC dc = ( void * )wParam;
@@ -691,10 +694,10 @@ LRESULT CALLBACK StringProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 			memcpy( info->currentFont, SbGUIMaster.currentFont, sizeof( LOGFONTW ) );
 			info->currentFont->lfHeight = info->fontSize;
 
-			sbWnd_Dims newSize = { 0 };
-			memcpy( &newSize, wnd->dims, sizeof( sbWnd_Dims ) );
-			newSize.intDims[2] = SBWindows.getStringWidth( info->str, info->fontSize ) + 4;
-			SBWindows.changeDims( wnd, wnd->dimType, &newSize );
+			sbWnd_Layout newSize = { 0 };
+			memcpy( &newSize, wnd->lout, sizeof( sbWnd_Layout ) );
+			newSize.dims.intDims[2] = SBWindows.getStringWidth( info->str, info->fontSize ) + 4;
+			SBWindows.changeLayout( wnd, &newSize );
 
 			InvalidateRect( hwnd, NULL, TRUE );
 			break;
@@ -974,8 +977,8 @@ BOOL CALLBACK ChildSizingProc( IN HWND hwnd, IN LPARAM lParam ) {
 	sbWnd *wnd = ( void * )GetWindowLongPtrW( hwnd, GWLP_USERDATA );
 
 	dimension finDims[4] = { 0 };
-	sbWndEvaluateDims( wnd->parent, wnd->dimType, wnd->dims, finDims );
-
+	sbWndEvaluateLayout( wnd->lout, finDims );
+	
 	SetWindowPos(
 		hwnd, 0,
 		finDims[0],
