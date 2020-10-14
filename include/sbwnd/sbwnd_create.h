@@ -379,23 +379,7 @@ sbWnd
 
 void
 	destroy_AllTypes( sbWnd * ),
-	sbWndCommonDestructor( sbWnd * ),
-	destroy_SbBasicWindow( sbWnd * ),
-	destroy_SbTextbox( sbWnd * ),
-
-	destroy_SbBasicTextWindow( sbWnd * ),
-	destroy_SbClickableWindow( sbWnd * ),
-
-	destroy_SbRestrictedImageWindow( sbWnd * ),
-	destroy_SbMasterWindow( sbWnd * ),
-
-	destroy_SbViewcmdMasterWindow( sbWnd * ),
-	destroy_SbStringWindow( sbWnd * ),
-
-	destroy_SbProgressBarWindow( sbWnd * ),
-	destroy_SbDldcmdMasterWindow( sbWnd * ),
-
-	destroy_SbVScrollbarWindow( sbWnd * );
+	sbWndCommonDestructor( sbWnd * );
 
 void
 	sbWnd_DeleteTextboxInfo( SBTextboxInfo * ),
